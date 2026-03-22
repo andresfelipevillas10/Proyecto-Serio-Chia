@@ -3,8 +3,8 @@
     <string name="welcome_conductor">Bienvenido, Conductor</string>
     <string name="map_reserved_space">Espacio reservado para el mapa y las rutas.</string>
     <string name="logout_test">Cerrar Sesión (Modo Test)</string>
-    <string name="good_day">¡Buen día! 👋</string>
-    <string name="please_login">Por favor, ingresa para continuar a la App</string>
+    <string name="good_day">¡Buen día Conductor! 👋</string>
+    <string name="please_login">Por favor, ingresa para continuar con tu viaje.</string>
     <string name="email_hint">Correo Electrónico</string>
     <string name="password_hint">Contraseña</string>
     <string name="ingresar">INGRESAR</string>
