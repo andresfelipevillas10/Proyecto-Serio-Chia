@@ -45,13 +45,17 @@ class Register : AppCompatActivity() {
         tvLoginRedirect = findViewById(R.id.tvLoginRedirect)
 
         btnFinalizar.setOnClickListener {
+            val nom = nombre.text.toString().trim()
+            val ape = apellido.text.toString().trim()
+            val tel = telefono.text.toString().trim()
+            val dir = direccion.text.toString().trim()
             val emailTxt = emailReg.text.toString().trim()
             val passTxt = passReg.text.toString().trim()
 
-            if (emailTxt.isNotEmpty() && passTxt.length >= 6) {
+            if (nom.isNotEmpty() && ape.isNotEmpty() && tel.isNotEmpty() && dir.isNotEmpty() && emailTxt.isNotEmpty() && passTxt.length >= 6) {
                 signUp(emailTxt, passTxt)
             } else {
-                Toast.makeText(this, "Datos inválidos (Contraseña mín. 6 caracteres)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Por favor, complete todos los campos (Contraseña mín. 6 caracteres)", Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -1,3 +1,28 @@
 <resources>
-    <string name="app_name">Proyecto-Definitivo</string>
+    <string name="app_name">Proyecto Serio Chía</string>
+    <string name="welcome_conductor">Bienvenido, Conductor</string>
+    <string name="map_reserved_space">Espacio reservado para el mapa y las rutas.</string>
+    <string name="logout_test">Cerrar Sesión (Modo Test)</string>
+    <string name="good_day">¡Buen día! 👋</string>
+    <string name="please_login">Por favor, ingresa para continuar a la App</string>
+    <string name="email_hint">Correo Electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="ingresar">INGRESAR</string>
+    <string name="crear_cuenta">CREAR CUENTA</string>
+    <string name="olvido_password">¿Olvidó su contraseña?</string>
+    <string name="alcaldia_chia">Alcaldía de Chía</string>
+    <string name="crea_tu_cuenta">Crea tu cuenta</string>
+    <string name="registro_desc">Por favor ingresa tus datos para completar el registro.</string>
+    <string name="nombre">Nombre</string>
+    <string name="apellido">Apellido</string>
+    <string name="telefono">Teléfono</string>
+    <string name="direccion">Dirección</string>
+    <string name="password_hint_reg">Contraseña (Mín. 6 caracteres)</string>
+    <string name="finalizar_registro">Finalizar Registro</string>
+    <string name="ya_tienes_cuenta">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="administracion_municipal">ADMINISTRACIÓN MUNICIPAL DE CHÍA • 2026</string>
+    <string name="recover_password_title">Recuperar Contraseña</string>
+    <string name="recover_password_desc">Ingresa tu correo para recibir instrucciones de recuperación.</string>
+    <string name="enviar_instrucciones">ENVIAR INSTRUCCIONES</string>
+    <string name="volver_login">Volver al inicio de sesión</string>
 </resources>

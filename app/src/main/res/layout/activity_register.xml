@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#f8f9fa">
+    android:background="@color/background_gray">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,16 +15,16 @@
             android:id="@+id/btnBack"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_launcher_foreground"
-            app:tint="#001e40"
+            android:src="@drawable/ic_back"
+            app:tint="@color/primary_blue"
             android:contentDescription="Volver" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Alcaldía de Chía"
+            android:text="@string/alcaldia_chia"
             android:textStyle="bold"
             android:textSize="20sp"
-            android:textColor="#001e40"
+            android:textColor="@color/primary_blue"
             android:layout_marginStart="16dp"/>
     </LinearLayout>
 
@@ -61,17 +61,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Crea tu cuenta"
+                android:text="@string/crea_tu_cuenta"
                 android:textSize="30sp"
                 android:textStyle="bold"
-                android:textColor="#001e40"/>
+                android:textColor="@color/primary_blue"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Por favor ingresa tus datos para completar el registro."
+                android:text="@string/registro_desc"
                 android:textSize="16sp"
-                android:textColor="#43474F"
+                android:textColor="@color/secondary_gray"
                 android:textAlignment="center"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="40dp"/>
@@ -88,7 +88,7 @@
                     android:id="@+id/nombre"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Nombre"
+                    android:hint="@string/nombre"
                     android:inputType="textPersonName"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -104,7 +104,7 @@
                     android:id="@+id/apellido"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Apellido"
+                    android:hint="@string/apellido"
                     android:inputType="textPersonName"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -120,7 +120,7 @@
                     android:id="@+id/telefono"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Teléfono"
+                    android:hint="@string/telefono"
                     android:inputType="phone"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -136,7 +136,7 @@
                     android:id="@+id/direccion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Dirección"
+                    android:hint="@string/direccion"
                     android:inputType="textPostalAddress"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -152,7 +152,7 @@
                     android:id="@+id/emailregister"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Correo Electrónico"
+                    android:hint="@string/email_hint"
                     android:inputType="textEmailAddress"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -169,7 +169,7 @@
                     android:id="@+id/passwordregister"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Contraseña (Mín. 6 caracteres)"
+                    android:hint="@string/password_hint_reg"
                     android:inputType="textPassword"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -177,18 +177,18 @@
                 android:id="@+id/btnDoRegister"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
-                android:text="Finalizar Registro"
+                android:text="@string/finalizar_registro"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:cornerRadius="12dp"
-                app:backgroundTint="#006c49" />
+                app:backgroundTint="@color/primary_green" />
 
             <TextView
                 android:id="@+id/tvLoginRedirect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¿Ya tienes cuenta? Inicia sesión"
-                android:textColor="#001e40"
+                android:text="@string/ya_tienes_cuenta"
+                android:textColor="@color/primary_blue"
                 android:textStyle="bold"
                 android:layout_marginTop="24dp"
                 android:padding="8dp"
@@ -206,10 +206,10 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="ADMINISTRACIÓN MUNICIPAL DE CHÍA • 2026"
+        android:text="@string/administracion_municipal"
         android:textSize="10sp"
         android:textStyle="bold"
-        android:textColor="#001e40"
+        android:textColor="@color/primary_blue"
         android:alpha="0.4"
         android:gravity="center"
         android:padding="24dp"/>

@@ -18,13 +18,7 @@
             android:name=".HomeRutasActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-        <activity
             android:name=".Register"
-            android:exported="false" />
-        <activity
-            android:name=".User"
             android:exported="false" />
         <activity
             android:name=".Login"
