@@ -25,4 +25,21 @@
     <string name="recover_password_desc">Ingresa tu correo para recibir instrucciones de recuperación.</string>
     <string name="enviar_instrucciones">ENVIAR INSTRUCCIONES</string>
     <string name="volver_login">Volver al inicio de sesión</string>
+
+    <!-- Toasts and Validation -->
+    <string name="error_complete_fields">Por favor, complete todos los campos</string>
+    <string name="error_invalid_email">Por favor, ingrese un correo válido</string>
+    <string name="error_short_password">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="registration_complete">Registro completo</string>
+    <string name="db_error">Error en base de datos: %1$s</string>
+    <string name="auth_failed">Error de autenticación: %1$s</string>
+    <string name="login_failed">Error: usuario no encontrado o credenciales incorrectas</string>
+    <string name="instructions_sent">Instrucciones enviadas al correo</string>
+
+    <!-- Home Strings -->
+    <string name="loading_route_config">Cargando Configuración de Rutas...</string>
+    <string name="opening_support">Abriendo Soporte Técnico...</string>
+    <string name="already_in_home">Ya estás en Recorrido</string>
+    <string name="loading_stats">Cargando Estadísticas...</string>
+    <string name="opening_user_settings">Abriendo Ajustes de Usuario...</string>
 </resources>

@@ -2,62 +2,72 @@ package com.example.proyecto_definitivo
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
+import android.util.Patterns
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 
 class Login : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
-    private lateinit var email: EditText
-    private lateinit var password: EditText
-    private lateinit var ingresar: Button
-    private lateinit var register: Button
-    private lateinit var olvidoPass: TextView
+    private lateinit var etEmail: TextInputEditText
+    private lateinit var etPassword: TextInputEditText
+    private lateinit var btnIngresar: MaterialButton
+    private lateinit var btnRegister: MaterialButton
+    private lateinit var tvOlvidoPass: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
         auth = FirebaseAuth.getInstance()
-        email = findViewById(R.id.email)
-        password = findViewById(R.id.password)
-        ingresar = findViewById(R.id.ingresar)
-        register = findViewById(R.id.registrar)
-        olvidoPass = findViewById(R.id.tvOlvidoPassword)
+        etEmail = findViewById(R.id.email)
+        etPassword = findViewById(R.id.password)
+        btnIngresar = findViewById(R.id.ingresar)
+        btnRegister = findViewById(R.id.registrar)
+        tvOlvidoPass = findViewById(R.id.tvOlvidoPassword)
 
-        ingresar.setOnClickListener {
-            val emailTxt = email.text.toString().trim()
-            val passTxt = password.text.toString().trim()
-
-            if (emailTxt.isNotEmpty() && passTxt.isNotEmpty()) {
-                login(emailTxt, passTxt)
-            } else {
-                Toast.makeText(this, "Por favor, llene los campos", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        register.setOnClickListener {
+        btnIngresar.setOnClickListener { validateAndLogin() }
+        btnRegister.setOnClickListener {
             startActivity(Intent(this, Register::class.java))
         }
-
-        olvidoPass.setOnClickListener {
+        tvOlvidoPass.setOnClickListener {
             startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
     }
 
-    private fun login(emailTxt: String, passTxt: String) {
-        auth.signInWithEmailAndPassword(emailTxt, passTxt)
+    private fun validateAndLogin() {
+        val email = etEmail.text.toString().trim()
+        val pass = etPassword.text.toString().trim()
+
+        if (email.isEmpty() || pass.isEmpty()) {
+            showToast(getString(R.string.error_complete_fields))
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            showToast(getString(R.string.error_invalid_email))
+            return
+        }
+
+        login(email, pass)
+    }
+
+    private fun login(email: String, pass: String) {
+        auth.signInWithEmailAndPassword(email, pass)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    val intent = Intent(this@Login, HomeRutasActivity::class.java)
-                    startActivity(intent)
+                    startActivity(Intent(this, HomeRutasActivity::class.java))
                     finish()
                 } else {
-                    Toast.makeText(this@Login, "Error, usuario no encontrado", Toast.LENGTH_SHORT).show()
+                    showToast(getString(R.string.login_failed))
                 }
             }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

@@ -2,12 +2,13 @@ package com.example.proyecto_definitivo
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
+import android.util.Patterns
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
@@ -17,13 +18,13 @@ class Register : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var dbRef: DatabaseReference
 
-    private lateinit var nombre: EditText
-    private lateinit var apellido: EditText
-    private lateinit var telefono: EditText
-    private lateinit var direccion: EditText
-    private lateinit var emailReg: EditText
-    private lateinit var passReg: EditText
-    private lateinit var btnFinalizar: Button
+    private lateinit var etNombre: TextInputEditText
+    private lateinit var etApellido: TextInputEditText
+    private lateinit var etTelefono: TextInputEditText
+    private lateinit var etDireccion: TextInputEditText
+    private lateinit var etEmailReg: TextInputEditText
+    private lateinit var etPassReg: TextInputEditText
+    private lateinit var btnFinalizar: MaterialButton
     private lateinit var btnBack: ImageView
     private lateinit var tvLoginRedirect: TextView
 
@@ -34,79 +35,74 @@ class Register : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         dbRef = FirebaseDatabase.getInstance().getReference("users")
 
-        nombre = findViewById(R.id.nombre)
-        apellido = findViewById(R.id.apellido)
-        telefono = findViewById(R.id.telefono)
-        direccion = findViewById(R.id.direccion)
-        emailReg = findViewById(R.id.emailregister)
-        passReg = findViewById(R.id.passwordregister)
+        etNombre = findViewById(R.id.nombre)
+        etApellido = findViewById(R.id.apellido)
+        etTelefono = findViewById(R.id.telefono)
+        etDireccion = findViewById(R.id.direccion)
+        etEmailReg = findViewById(R.id.emailregister)
+        etPassReg = findViewById(R.id.passwordregister)
         btnFinalizar = findViewById(R.id.btnDoRegister)
         btnBack = findViewById(R.id.btnBack)
         tvLoginRedirect = findViewById(R.id.tvLoginRedirect)
 
-        btnFinalizar.setOnClickListener {
-            val nom = nombre.text.toString().trim()
-            val ape = apellido.text.toString().trim()
-            val tel = telefono.text.toString().trim()
-            val dir = direccion.text.toString().trim()
-            val emailTxt = emailReg.text.toString().trim()
-            val passTxt = passReg.text.toString().trim()
-
-            if (nom.isNotEmpty() && ape.isNotEmpty() && tel.isNotEmpty() && dir.isNotEmpty() && emailTxt.isNotEmpty() && passTxt.length >= 6) {
-                signUp(emailTxt, passTxt)
-            } else {
-                Toast.makeText(this, "Por favor, complete todos los campos (Contraseña mín. 6 caracteres)", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        btnBack.setOnClickListener {
-            finish()
-        }
-
-        tvLoginRedirect.setOnClickListener {
-            finish()
-        }
+        btnFinalizar.setOnClickListener { validateAndRegister() }
+        btnBack.setOnClickListener { finish() }
+        tvLoginRedirect.setOnClickListener { finish() }
     }
 
-    private fun signUp(email: String, pass: String) {
+    private fun validateAndRegister() {
+        val nom = etNombre.text.toString().trim()
+        val ape = etApellido.text.toString().trim()
+        val tel = etTelefono.text.toString().trim()
+        val dir = etDireccion.text.toString().trim()
+        val email = etEmailReg.text.toString().trim()
+        val pass = etPassReg.text.toString().trim()
+
+        if (nom.isEmpty() || ape.isEmpty() || tel.isEmpty() || dir.isEmpty() || email.isEmpty() || pass.isEmpty()) {
+            showToast(getString(R.string.error_complete_fields))
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            showToast(getString(R.string.error_invalid_email))
+            return
+        }
+
+        if (pass.length < 6) {
+            showToast(getString(R.string.error_short_password))
+            return
+        }
+
+        val userData = User(null, nom, ape, tel, dir, email)
+        signUp(email, pass, userData)
+    }
+
+    private fun signUp(email: String, pass: String, userData: User) {
         auth.createUserWithEmailAndPassword(email, pass)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val userId = auth.currentUser?.uid ?: ""
-                    addUserDatabase(
-                        userId,
-                        nombre.text.toString(),
-                        apellido.text.toString(),
-                        telefono.text.toString(),
-                        direccion.text.toString(),
-                        email
-                    )
+                    addUserDatabase(userId, userData.copy(uid = userId))
                 } else {
-                    Toast.makeText(this, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT)
-                        .show()
+                    showToast(getString(R.string.auth_failed, task.exception?.message))
                 }
             }
     }
 
-    private fun addUserDatabase(
-        uid: String,
-        nom: String,
-        ape: String,
-        tel: String,
-        dir: String,
-        mail: String
-    ) {
-        val user = User(uid, nom, ape, tel, dir, mail)
-
+    private fun addUserDatabase(uid: String, user: User) {
         dbRef.child(uid).setValue(user)
             .addOnSuccessListener {
                 auth.signOut()
-                Toast.makeText(this, "Registro completo", Toast.LENGTH_SHORT).show()
+                showToast(getString(R.string.registration_complete))
                 startActivity(Intent(this, Login::class.java))
                 finish()
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Error en DB: ${it.message}", Toast.LENGTH_SHORT).show()
+                showToast(getString(R.string.db_error, it.message))
             }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

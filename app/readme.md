@@ -25,9 +25,16 @@ Para mantener el código limpio y organizado, estamos usando una arquitectura de
 ## 🗺️ Estructura de Clases y Lógica
 Para que todos estemos en la misma página con el código fuente y las reglas de negocio, así es como están organizadas nuestras clases principales:
 
-* **`Login.kt`, `Register.kt` y el modelo `User.kt`:** Son **exactamente las mismas que las del profe**. Mantenemos su estructura y estándar intactos para asegurar la compatibilidad con lo evaluado en clase.
-* **`ForgotPasswordActivity.kt`:** Es una pantalla **nueva** que agregamos para la recuperación de cuentas, pero está construida utilizando exactamente la misma plantilla y lógica de Firebase enseñada por el profe.
-* **`HomeRutasActivity.kt`:** Nuestro Dashboard principal. Aquí es donde se ensamblan los componentes modulares y sirve como base principal de navegación hacia las futuras pantallas de la app.
+* **`Login.kt`, `Register.kt` y `ForgotPasswordActivity.kt`:** Siguen la lógica base del profe pero han sido **perfeccionadas** para evitar código espagueti. Se han modularizado las validaciones y el manejo de errores de Firebase.
+* **`User.kt`:** Modelo de datos limpio para la base de datos.
+* **`HomeRutasActivity.kt`:** Dashboard principal. Se ha limpiado de código muerto y comentarios innecesarios para que sea más legible.
+
+### 🛠️ Estándares de Código (Para el equipo)
+Para que codear sea más fácil y mantengamos la calidad:
+1.  **Validaciones Primero:** Antes de llamar a Firebase, usa los métodos `validateX()` creados. Verifica que los campos no estén vacíos y que el email sea válido (`Patterns.EMAIL_ADDRESS`).
+2.  **Material Components:** En el código Kotlin, usa siempre `MaterialButton` y `TextInputEditText` para referenciar las vistas del XML. Esto evita errores de casteo y nos da acceso a todas las funciones de Material Design.
+3.  **Toasts y Mensajes:** **Prohibido** usar strings quemados ("like this"). Usa siempre `getString(R.string.nombre_del_string)`.
+4.  **Helper Methods:** Si vas a mostrar un Toast, usa el método `showToast(message)` ya implementado en las actividades para mantener el código limpio.
 
 ---
 
