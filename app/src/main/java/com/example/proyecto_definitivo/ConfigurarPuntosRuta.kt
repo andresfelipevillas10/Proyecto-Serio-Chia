@@ -87,13 +87,13 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         googleMap.uiSettings.isZoomControlsEnabled = true
         googleMap.uiSettings.isCompassEnabled = true
         googleMap.uiSettings.isMapToolbarEnabled = true
-        // --- AQUÍ ESTÁ LO QUE BUSCAS ---
-        googleMap.uiSettings.isMyLocationButtonEnabled = true // Activa el BOTÓN de la mira
+
         // Esto empuja los controles de Google (botón de ubicación, logo de Google)
 // hacia adentro para que no se solapen con tu UI.
         googleMap.setPadding(0, 150, 0, 0) // (izquierda, arriba, derecha, abajo) en píxeles
 
         habilitarMiUbicacion()
+        googleMap.uiSettings.isMyLocationButtonEnabled = true
 
         val ubicacionInicial = LatLng(4.8615, -74.0510) // Centro de Chía
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacionInicial, 14f))
@@ -106,11 +106,22 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun habilitarMiUbicacion() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // SI TENEMOS PERMISO: Se activa el punto azul Y el botón
             googleMap.isMyLocationEnabled = true
+        } else {
+            // SI NO TENEMOS PERMISO: Hay que pedirlo
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1000
+            )
         }
     }
-
     // --- LA MAGIA NUEVA DEL DIÁLOGO ---
     private fun mostrarDialogoAgregarPunto(latLng: LatLng, puntoExistente: PuntoRuta? = null) {
         // Inflamos tu nuevo diseño con bordes redondeados

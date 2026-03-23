@@ -31,7 +31,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:text="Ruta de Tránsito"
+                android:text="Configurar Puntos"
                 android:textColor="#001e40"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -48,138 +48,125 @@
                 android:textStyle="bold" />
     </LinearLayout>
 
-    <androidx.core.widget.NestedScrollView
+    <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/mapConfigurarPuntos"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="320dp"
+            app:layout_constraintTop_toBottomOf="@id/topBarPaso2" />
+
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            android:background="@drawable/bg_input_gray"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:elevation="6dp"
+            app:layout_constraintStart_toStartOf="@id/mapConfigurarPuntos"
+            app:layout_constraintTop_toTopOf="@id/mapConfigurarPuntos">
+        <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_circle_green" />
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="GPS Activo"
+                android:textColor="#001e40"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+    </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/containerLista"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:fillViewport="true"
-            app:layout_constraintTop_toBottomOf="@id/topBarPaso2"
+            android:background="@drawable/bg_surface_rounded_top"
+            android:elevation="8dp"
+            android:layout_marginTop="-20dp"
+            app:layout_constraintTop_toBottomOf="@id/mapConfigurarPuntos"
             app:layout_constraintBottom_toTopOf="@id/bottomBarPaso2">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRecargarPuntos"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="54dp"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="24dp"
+                android:text="RECARGAR PUNTOS"
+                android:textColor="#001e40"
+                android:textSize="12sp"
+                app:icon="@drawable/ic_refresh"
+                app:iconSize="18dp"
+                app:strokeColor="#1A001e40"
+                app:cornerRadius="16dp"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <androidx.fragment.app.FragmentContainerView
-                    android:id="@+id/mapConfigurarPuntos"
-                    android:name="com.google.android.gms.maps.SupportMapFragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            <LinearLayout
+        <LinearLayout
+                android:id="@+id/headerListaPuntos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="24dp"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/btnRecargarPuntos">
+            <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Ruta Definida"
+                    android:textColor="#001e40"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            <TextView
+                    android:id="@+id/tvContadorPuntos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="12dp"
-                    android:background="@drawable/bg_input_gray"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="6dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:elevation="4dp"
-                    app:layout_constraintStart_toStartOf="@id/mapConfigurarPuntos"
-                    app:layout_constraintTop_toTopOf="@id/mapConfigurarPuntos">
+                    android:text="0 PUNTOS"
+                    android:textColor="#006c49"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+        </LinearLayout>
 
-                <View
-                        android:layout_width="8dp"
-                        android:layout_height="8dp"
-                        android:background="@drawable/bg_circle_green" />
+        <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerPuntosConfiguracion"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="16dp"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp"
+                app:layout_constraintTop_toBottomOf="@id/headerListaPuntos"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:listitem="@layout/item_punto_ruta" />
 
-                <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:text="GPS Activo"
-                        android:textColor="#001e40"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-            </LinearLayout>
-
-            <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRecargarPuntos"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="64dp"
-                    android:layout_marginHorizontal="16dp"
-                    android:layout_marginTop="16dp"
-                    android:text="ACTUALIZAR / RECARGAR PUNTOS"
-                    android:textColor="#001e40"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    app:icon="@drawable/ic_refresh"
-                    app:iconTint="#001e40"
-                    app:iconGravity="textStart"
-                    app:strokeColor="#33001e40"
-                    app:strokeWidth="2dp"
-                    app:cornerRadius="16dp"
-                    app:rippleColor="#33001e40"
-                    app:layout_constraintTop_toBottomOf="@id/mapConfigurarPuntos" />
-
-            <LinearLayout
-                    android:id="@+id/headerListaPuntos"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="bottom"
-                    android:paddingHorizontal="24dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    app:layout_constraintTop_toBottomOf="@id/btnRecargarPuntos">
-
-                <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Ruta Definida"
-                        android:textColor="#001e40"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                <TextView
-                        android:id="@+id/tvContadorPuntos"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="3 PUNTOS"
-                        android:textColor="#006c49"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerPuntosConfiguracion"
-                    android:layout_width="match_parent"
-                    android:layout_height="400dp"
-                    android:paddingHorizontal="24dp"
-                    android:clipToPadding="false"
-                    android:paddingBottom="24dp"
-                    app:layout_constraintTop_toBottomOf="@id/headerListaPuntos"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    tools:listitem="@layout/item_punto_ruta" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
             android:id="@+id/bottomBarPaso2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#E6F8F9FA"
+            android:background="#FFFFFF"
             android:padding="16dp"
-            android:elevation="12dp"
+            android:elevation="16dp"
             app:layout_constraintBottom_toBottomOf="parent">
 
         <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnGuardarConfiguracion"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="GUARDAR CONFIGURACIÓN"
+                android:text="FINALIZAR RUTA"
                 android:textColor="#ffffff"
-                android:textSize="14sp"
                 android:textStyle="bold"
                 app:backgroundTint="#006c49"
-                app:cornerRadius="12dp"
+                app:cornerRadius="16dp"
                 app:icon="@drawable/ic_check_circle"
-                app:iconGravity="textEnd"
-                app:iconTint="#ffffff" />
+                app:iconGravity="textEnd" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
