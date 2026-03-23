@@ -1,6 +1,7 @@
 package com.example.proyecto_definitivo
 
 data class Ruta( var id: String = "",
+                 var userId: String = "",
                  var nombre :String = "",
                  var descripcion: String="",
                  var activa:Boolean =true,

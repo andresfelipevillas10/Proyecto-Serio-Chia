@@ -24,6 +24,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
@@ -36,6 +37,7 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var tvContadorPuntos: TextView
 
     private val db = FirebaseDatabase.getInstance().reference
+    private val auth = FirebaseAuth.getInstance()
 
     private var rutaId: String = ""
     private var rutaNombre: String = ""
@@ -62,7 +64,7 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         // Botones de navegación
         btnBackPaso2.setOnClickListener { finish() }
         btnGuardarConfiguracion.setOnClickListener {
-            Toast.makeText(this, "Ruta configurada con éxito", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.route_configured_success), Toast.LENGTH_SHORT).show()
             finish() // Cierra y vuelve al menú
         }
 
@@ -149,7 +151,7 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         btnCerrar.setOnClickListener { dialog.dismiss() }
 
         btnActualizarGps.setOnClickListener {
-            Toast.makeText(this, "Debe mover el marcador en el mapa para actualizar", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.move_marker_toast), Toast.LENGTH_LONG).show()
         }
 
         btnGuardar.setOnClickListener {
@@ -170,16 +172,17 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
 
     // Tu validación intacta
     private fun validarYGuardarPunto(nombre: String, lat: Double, lng: Double, orden: Int, tipo: String, dialog: AlertDialog, idParaEditar: String?) {
+        val currentUserId = auth.currentUser?.uid ?: return
         val otrosPuntos = listaPuntos.filter { it.id != idParaEditar }
 
-        if (otrosPuntos.any { it.orden == orden }) { Toast.makeText(this, "El orden $orden ya existe", Toast.LENGTH_SHORT).show(); return }
-        if (tipo == "origen" && otrosPuntos.any { it.Tipo == "origen" }) { Toast.makeText(this, "Ya existe un origen", Toast.LENGTH_SHORT).show(); return }
-        if (tipo == "fin" && otrosPuntos.any { it.Tipo == "fin" }) { Toast.makeText(this, "Ya existe un fin", Toast.LENGTH_SHORT).show(); return }
+        if (otrosPuntos.any { it.orden == orden }) { Toast.makeText(this, getString(R.string.order_exists, orden), Toast.LENGTH_SHORT).show(); return }
+        if (tipo == "origen" && otrosPuntos.any { it.Tipo == "origen" }) { Toast.makeText(this, getString(R.string.origin_exists), Toast.LENGTH_SHORT).show(); return }
+        if (tipo == "fin" && otrosPuntos.any { it.Tipo == "fin" }) { Toast.makeText(this, getString(R.string.destination_exists), Toast.LENGTH_SHORT).show(); return }
 
         val puntoRef = if (idParaEditar != null) {
-            db.child("rutas").child(rutaId).child("puntos").child(idParaEditar)
+            db.child("rutas").child(currentUserId).child(rutaId).child("puntos").child(idParaEditar)
         } else {
-            db.child("rutas").child(rutaId).child("puntos").push()
+            db.child("rutas").child(currentUserId).child(rutaId).child("puntos").push()
         }
 
         val finalId = idParaEditar ?: puntoRef.key ?: ""
@@ -194,8 +197,9 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
 
     private fun cargarPuntosRuta() {
         if (rutaId.isEmpty()) return
+        val currentUserId = auth.currentUser?.uid ?: return
 
-        db.child("rutas").child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
+        db.child("rutas").child(currentUserId).child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
             listaPuntos.clear()
 
             for (puntoSnap in snapshot.children) {
@@ -243,8 +247,9 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun eliminarPuntoFirebase(punto: PuntoRuta) {
-        db.child("rutas").child(rutaId).child("puntos").child(punto.id).removeValue().addOnSuccessListener {
-            Toast.makeText(this, "Punto eliminado", Toast.LENGTH_SHORT).show()
+        val currentUserId = auth.currentUser?.uid ?: return
+        db.child("rutas").child(currentUserId).child(rutaId).child("puntos").child(punto.id).removeValue().addOnSuccessListener {
+            Toast.makeText(this, getString(R.string.point_deleted), Toast.LENGTH_SHORT).show()
             cargarPuntosRuta()
         }
     }

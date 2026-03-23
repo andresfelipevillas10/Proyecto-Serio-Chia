@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -22,6 +23,7 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
 
     // Tu lógica de Firebase intacta
     private val db = FirebaseDatabase.getInstance().reference
+    private val auth = FirebaseAuth.getInstance()
     private val listaRutas = mutableListOf<Ruta>()
     private lateinit var rutaAdapter: RutaAdapter
 
@@ -66,8 +68,10 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
     }
 
     private fun cargarRutas() {
+        val currentUserId = auth.currentUser?.uid ?: return
+
         // Quitamos el ProgressBar nativo porque tu diseño nuevo es más limpio
-        db.child("rutas").addValueEventListener(object : ValueEventListener {
+        db.child("rutas").child(currentUserId).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 listaRutas.clear()
 
@@ -82,12 +86,12 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
                 rutaAdapter.notifyDataSetChanged()
 
                 if (listaRutas.isEmpty()) {
-                    Toast.makeText(this@ListaRutas, "Aún no hay rutas creadas", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ListaRutas, getString(R.string.no_routes_yet), Toast.LENGTH_SHORT).show()
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@ListaRutas, "Error al cargar rutas: ${error.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@ListaRutas, getString(R.string.error_loading_routes, error.message), Toast.LENGTH_LONG).show()
             }
         })
     }
@@ -103,9 +107,10 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
 
     // Función para el botón rojo de la tarjeta
     private fun eliminarRutaFirebase(ruta: Ruta) {
-        db.child("rutas").child(ruta.id).removeValue()
+        val currentUserId = auth.currentUser?.uid ?: return
+        db.child("rutas").child(currentUserId).child(ruta.id).removeValue()
             .addOnSuccessListener {
-                Toast.makeText(this, "Ruta eliminada", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.route_deleted), Toast.LENGTH_SHORT).show()
             }
     }
 }
