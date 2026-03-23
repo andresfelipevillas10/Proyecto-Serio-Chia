@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F8F9FA">
+
+    <LinearLayout
+            android:id="@+id/topBarCrear"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+                android:id="@+id/btnBackCrear"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_back"
+                app:tint="#001e40" />
+
+        <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Nueva Ruta"
+                android:textColor="#001e40"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        <ImageButton
+                android:id="@+id/btnHelp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_help"
+                app:tint="#001e40" />
+    </LinearLayout>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressRoute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progress="50"
+            app:indicatorColor="#006c49"
+            app:trackColor="#E1E3E4"
+            app:trackThickness="4dp"
+            app:layout_constraintTop_toBottomOf="@id/topBarCrear" />
+
+    <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:fillViewport="true"
+            app:layout_constraintTop_toBottomOf="@id/progressRoute"
+            app:layout_constraintBottom_toTopOf="@id/bottomBarAction">
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PASO 1 DE 2"
+                    android:textColor="#006c49"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Configuración"
+                    android:textColor="#001e40"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Defina los detalles básicos del recorrido."
+                    android:textColor="#43474F"
+                    android:textSize="14sp" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginStart="4dp"
+                    android:text="NOMBRE DE LA RUTA"
+                    android:textColor="#001e40"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+            <EditText
+                    android:id="@+id/etRouteName"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_gray"
+                    android:paddingHorizontal="16dp"
+                    android:hint="Ej: Ruta Norte"
+                    android:textColor="#001e40"
+                    android:textColorHint="#737780"
+                    android:textSize="16sp"
+                    android:inputType="textCapWords" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="4dp"
+                    android:text="DESCRIPCIÓN CORTA"
+                    android:textColor="#001e40"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+            <EditText
+                    android:id="@+id/etShortDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_gray"
+                    android:paddingHorizontal="16dp"
+                    android:hint="Referencia rápida..."
+                    android:textColor="#001e40"
+                    android:textColorHint="#737780"
+                    android:textSize="14sp"
+                    android:inputType="text" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="4dp"
+                    android:text="RADIO DE DETECCIÓN (Metros)"
+                    android:textColor="#001e40"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_input_gray"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+
+                <EditText
+                        android:id="@+id/etDetectionRadius"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="Ej: 30"
+                        android:textColor="#001e40"
+                        android:textColorHint="#737780"
+                        android:textSize="16sp"
+                        android:inputType="number" />
+
+                <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_antenna"
+                        app:tint="#006c49" />
+            </LinearLayout>
+
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_info_box"
+                    android:padding="12dp"
+                    android:orientation="horizontal"
+                    android:gravity="top">
+
+                <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_info"
+                        app:tint="#001e40"
+                        android:layout_marginTop="2dp"/>
+
+                <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Distancia para marcar automáticamente la llegada a un punto."
+                        android:textColor="#43474F"
+                        android:textSize="12sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+            android:id="@+id/bottomBarAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#E6F8F9FA"
+            android:padding="16dp"
+            android:elevation="8dp"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNextStepMap"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Siguiente: Puntos"
+                android:textColor="#ffffff"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="#001e40"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_chevron_right"
+                app:iconGravity="textEnd"
+                app:iconTint="#ffffff" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

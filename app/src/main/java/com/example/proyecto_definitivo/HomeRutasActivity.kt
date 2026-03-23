@@ -35,9 +35,16 @@ class HomeRutasActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
+
+        // ========================================================
+        // ¡LA CONEXIÓN MAESTRA!
+        // ========================================================
         btnConfigRutas.setOnClickListener {
-            showToast(getString(R.string.loading_route_config))
+            // Abrimos la ListaRutas (que ahora tiene el diseño de Tailwind)
+            val intent = Intent(this, ListaRutas::class.java)
+            startActivity(intent)
         }
+        // ========================================================
 
         btnSoporte.setOnClickListener {
             showToast(getString(R.string.opening_support))

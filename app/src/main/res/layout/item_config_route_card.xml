@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:layout_marginHorizontal="2dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1Ac3c6d1"
+        app:cardBackgroundColor="#FFFFFF">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+        <ImageView
+                android:id="@+id/ivConfigRouteIcon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_circle_green"
+                android:padding="12dp"
+                android:src="@drawable/ic_route"
+                app:tint="#005236"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        <TextView
+                android:id="@+id/tvConfigRouteName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp"
+                android:text="Ruta 1 - Centro"
+                android:textColor="#001e40"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/ivConfigRouteIcon"
+                app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
+                app:layout_constraintTop_toTopOf="@id/ivConfigRouteIcon"
+                app:layout_constraintBottom_toTopOf="@id/tvConfigRouteDetails"
+               />
+
+        <TextView
+                android:id="@+id/tvConfigRouteDetails"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp"
+                android:text="12 Paradas • 15 min"
+                android:textColor="#737780"
+                android:textSize="12sp"
+                app:layout_constraintStart_toEndOf="@id/ivConfigRouteIcon"
+                app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
+                app:layout_constraintTop_toBottomOf="@id/tvConfigRouteName"
+                app:layout_constraintBottom_toBottomOf="@id/ivConfigRouteIcon" />
+
+        <ImageButton
+                android:id="@+id/btnDeleteRoute"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_circle_light_red"
+                android:src="@drawable/ic_delete"
+                app:tint="#ba1a1a"
+                app:layout_constraintEnd_toStartOf="@id/btnEditRoute"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        <ImageButton
+                android:id="@+id/btnEditRoute"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_circle_light_blue"
+                android:src="@drawable/ic_edit"
+                app:tint="#001e40"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
