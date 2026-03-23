@@ -42,4 +42,14 @@
     <string name="already_in_home">Ya estás en Recorrido</string>
     <string name="loading_stats">Cargando Estadísticas...</string>
     <string name="opening_user_settings">Abriendo Ajustes de Usuario...</string>
+    <string name="no_routes_yet">Aún no hay rutas creadas</string>
+    <string name="error_loading_routes">Error al cargar rutas: %1$s</string>
+    <string name="route_deleted">Ruta eliminada</string>
+    <string name="route_created_next_step">Ruta creada. Pasando al mapa...</string>
+    <string name="route_configured_success">Ruta configurada con éxito</string>
+    <string name="point_deleted">Punto eliminado</string>
+    <string name="order_exists">El orden %1$d ya existe</string>
+    <string name="origin_exists">Ya existe un origen</string>
+    <string name="destination_exists">Ya existe un fin</string>
+    <string name="move_marker_toast">Debe mover el marcador en el mapa para actualizar</string>
 </resources>

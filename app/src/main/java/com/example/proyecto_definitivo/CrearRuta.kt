@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 class CrearRuta : AppCompatActivity() {
@@ -21,6 +22,7 @@ class CrearRuta : AppCompatActivity() {
     private lateinit var progressRoute: LinearProgressIndicator // La barrita de progreso visual
 
     private val db = FirebaseDatabase.getInstance().reference
+    private val auth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,14 +78,18 @@ class CrearRuta : AppCompatActivity() {
         }
 
         // Bloqueamos el botón y animamos la barra de progreso mientras Firebase trabaja
+        val currentUserId = auth.currentUser?.uid ?: return
+
+        // Bloqueamos el botón y animamos la barra de progreso mientras Firebase trabaja
         btnSiguientePuntos.isEnabled = false
         progressRoute.isIndeterminate = true
 
-        val rutaRef = db.child("rutas").push()
+        val rutaRef = db.child("rutas").child(currentUserId).push()
         val rutaId = rutaRef.key ?: ""
 
         val ruta = Ruta(
             id = rutaId,
+            userId = currentUserId,
             nombre = nombre,
             descripcion = descripcion,
             activa = true,
@@ -95,7 +101,7 @@ class CrearRuta : AppCompatActivity() {
             .addOnSuccessListener {
                 progressRoute.isIndeterminate = false
                 progressRoute.progress = 100 // Llenamos la barra al 100%
-                Toast.makeText(this, "Ruta creada. Pasando al mapa...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.route_created_next_step), Toast.LENGTH_SHORT).show()
 
                 // EL CAMBIO MAESTRO: Saltamos directo al Paso 2 enviando los datos recién creados
                 val intent = Intent(this, ConfigurarPuntosRuta::class.java)
