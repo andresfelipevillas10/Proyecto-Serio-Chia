@@ -56,6 +56,7 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
                 val intent = Intent(this, PreRecorridoActivity::class.java)
                 intent.putExtra("rutaId", rutaAIniciar.id)
                 intent.putExtra("rutaNombre", rutaAIniciar.nombre)
+                intent.putExtra("rutaRadio", rutaAIniciar.radioDeteccion)
                 startActivity(intent)
             }
         )

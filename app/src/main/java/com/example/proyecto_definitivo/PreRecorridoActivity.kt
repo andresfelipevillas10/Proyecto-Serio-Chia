@@ -124,8 +124,9 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun cargarPuntosDesdeFirebase() {
         if (rutaId.isEmpty()) return
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        db.child("rutas").child(rutaId).child("puntos")
+        db.child("rutas").child(currentUserId).child(rutaId).child("puntos")
             .get()
             .addOnSuccessListener { snapshot ->
                 listaPuntos.clear()

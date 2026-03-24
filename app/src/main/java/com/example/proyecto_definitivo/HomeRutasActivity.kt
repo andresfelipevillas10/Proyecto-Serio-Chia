@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 class HomeRutasActivity : AppCompatActivity() {
@@ -62,8 +63,11 @@ class HomeRutasActivity : AppCompatActivity() {
     }
 
     private fun cargarRutasDeAccesoRapido() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        if (currentUserId.isEmpty()) return
+
         // Consultamos la base de datos para traer las rutas disponibles
-        db.child("rutas").limitToFirst(5).get().addOnSuccessListener { snapshot ->
+        db.child("rutas").child(currentUserId).limitToFirst(5).get().addOnSuccessListener { snapshot ->
             listaRutasAccesoRapido.clear()
 
             for (rutaSnap in snapshot.children) {
