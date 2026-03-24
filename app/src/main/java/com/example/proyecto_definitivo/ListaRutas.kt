@@ -41,13 +41,22 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
         rvConfigRutas.layoutManager = LinearLayoutManager(this)
 
         // Inicializamos el Adapter (con las acciones de editar y eliminar)
+        // Dentro del onCreate de tu ListaRutas.kt:
         rutaAdapter = RutaAdapter(
             listaRutas = listaRutas,
             onEditClick = { rutaSeleccionada ->
+                // Editar: Va al mapa de Configurar Puntos (Paso 2)
                 abrirPantallaConfigurarPuntos(rutaSeleccionada)
             },
             onDeleteClick = { rutaAEliminar ->
                 eliminarRutaFirebase(rutaAEliminar)
+            },
+            onStartClick = { rutaAIniciar ->
+                // ¡NUEVO! Comenzar: Va a la pantalla Pre-Recorrido
+                val intent = Intent(this, PreRecorridoActivity::class.java)
+                intent.putExtra("rutaId", rutaAIniciar.id)
+                intent.putExtra("rutaNombre", rutaAIniciar.nombre)
+                startActivity(intent)
             }
         )
 

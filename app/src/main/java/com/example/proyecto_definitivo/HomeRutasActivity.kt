@@ -1,4 +1,4 @@
-package com.example.proyecto_definitivo
+package com.example.proyecto_definitivo // Tu paquete
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
+import com.google.firebase.database.FirebaseDatabase
 
 class HomeRutasActivity : AppCompatActivity() {
 
@@ -18,6 +19,11 @@ class HomeRutasActivity : AppCompatActivity() {
     private lateinit var tabRecorrido: LinearLayout
     private lateinit var tabStats: LinearLayout
     private lateinit var tabSettings: LinearLayout
+
+    // 🔥 Variables para la Base de Datos y el Adaptador
+    private val db = FirebaseDatabase.getInstance().reference
+    private val listaRutasAccesoRapido = mutableListOf<Ruta>()
+    private lateinit var adapterRutas: RutaRecorridoAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,35 +37,70 @@ class HomeRutasActivity : AppCompatActivity() {
         tabStats = findViewById(R.id.tabStats)
         tabSettings = findViewById(R.id.tabSettings)
 
+        // 1. Configurar la lista de Acceso Rápido
+        configurarRecyclerView()
+
+        // 2. Configurar los botones estáticos
         setupClickListeners()
+
+        // 3. Descargar las rutas para mostrarlas en el Home
+        cargarRutasDeAccesoRapido()
+    }
+
+    private fun configurarRecyclerView() {
+        rvRoutes.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false) // Formato Carrusel (Horizontal)
+
+        adapterRutas = RutaRecorridoAdapter(listaRutasAccesoRapido) { rutaSeleccionada ->
+            // Cuando el conductor toca el botón "INICIAR" en la tarjeta del Home:
+            val intent = Intent(this, PreRecorridoActivity::class.java)
+            intent.putExtra("rutaId", rutaSeleccionada.id)
+            intent.putExtra("rutaNombre", rutaSeleccionada.nombre)
+            intent.putExtra("rutaRadio", rutaSeleccionada.radioDeteccion)
+            startActivity(intent)
+        }
+        rvRoutes.adapter = adapterRutas
+    }
+
+    private fun cargarRutasDeAccesoRapido() {
+        // Consultamos la base de datos para traer las rutas disponibles
+        db.child("rutas").limitToFirst(5).get().addOnSuccessListener { snapshot ->
+            listaRutasAccesoRapido.clear()
+
+            for (rutaSnap in snapshot.children) {
+                val ruta = rutaSnap.getValue(Ruta::class.java)
+                if (ruta != null) {
+                    listaRutasAccesoRapido.add(ruta)
+                }
+            }
+            // Refrescamos la lista para que aparezcan las tarjetas
+            adapterRutas.notifyDataSetChanged()
+
+        }.addOnFailureListener {
+            Toast.makeText(this, "Error al cargar las rutas recientes", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupClickListeners() {
-
-        // ========================================================
-        // ¡LA CONEXIÓN MAESTRA!
-        // ========================================================
         btnConfigRutas.setOnClickListener {
-            // Abrimos la ListaRutas (que ahora tiene el diseño de Tailwind)
+            // Abrimos el panel de administración
             val intent = Intent(this, ListaRutas::class.java)
             startActivity(intent)
         }
-        // ========================================================
 
         btnSoporte.setOnClickListener {
-            showToast(getString(R.string.opening_support))
+            showToast("Abriendo soporte...")
         }
 
         tabRecorrido.setOnClickListener {
-            showToast(getString(R.string.already_in_home))
+            showToast("Ya estás en la pantalla principal")
         }
 
         tabStats.setOnClickListener {
-            showToast(getString(R.string.loading_stats))
+            showToast("Estadísticas en desarrollo...")
         }
 
         tabSettings.setOnClickListener {
-            showToast(getString(R.string.opening_user_settings))
+            showToast("Abriendo perfil...")
         }
     }
 

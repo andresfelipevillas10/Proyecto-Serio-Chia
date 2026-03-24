@@ -48,4 +48,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    // ¡ESTA ES LA QUE FALTA!
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+
+    // Y asegúrate de tener la de maps también
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
 }
