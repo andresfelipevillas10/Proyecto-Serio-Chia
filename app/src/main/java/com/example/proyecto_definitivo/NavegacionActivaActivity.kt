@@ -91,8 +91,6 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         configurarMotorUbicacion()
 
-        // 6. Cargar los puntos para saber a dónde vamos
-        cargarPuntosRuta()
 
         tiempoUltimoPunto = System.currentTimeMillis() // Inicia el reloj
     }
@@ -116,6 +114,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         )
 
         habilitarCapaUbicacion()
+        cargarPuntosRuta()
     }
 
     private fun cargarPuntosRuta() {
@@ -178,8 +177,9 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun configurarMotorUbicacion() {
         locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L).apply {
             setMinUpdateIntervalMillis(2000L)
+            // --- ¡NUEVO! ---
+            setMinUpdateDistanceMeters(3f) // Solo actualiza si me moví al menos 3 metros reales
         }.build()
-
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 for (location in locationResult.locations) {
@@ -200,6 +200,12 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun procesarUbicacion(location: Location) {
+        // --- ¡NUEVO FILTRO ANTI-SALTOS! ---
+        // location.accuracy te dice el margen de error en metros.
+        // Si el error es mayor a 20 metros, ignoramos este dato porque es "basura".
+        if (location.hasAccuracy() && location.accuracy > 20f) {
+            return // Abortar: no actualizamos el mapa ni la línea
+        }
         // 1. Centrar cámara en el conductor
         val posicionActual = LatLng(location.latitude, location.longitude)
         mapNavegacion.animateCamera(CameraUpdateFactory.newLatLngZoom(posicionActual, 18f))

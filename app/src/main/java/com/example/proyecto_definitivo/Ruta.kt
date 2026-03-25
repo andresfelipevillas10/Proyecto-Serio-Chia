@@ -6,4 +6,7 @@ data class Ruta( var id: String = "",
                  var descripcion: String="",
                  var activa:Boolean =true,
                  var radioDeteccion:Float=30f,
-                 var creadaEn: Long = System.currentTimeMillis())
+                 var creadaEn: Long = System.currentTimeMillis(),
+
+                 var puntos: Map<String, PuntoRuta>? = null
+)

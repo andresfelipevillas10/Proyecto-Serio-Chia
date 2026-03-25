@@ -1,23 +1,22 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "proyecto-definitivo",
-    "storage_bucket": "proyecto-definitivo.appspot.com"
+    "project_number": "768644992880",
+    "firebase_url": "https://proyecto-definitivo11-default-rtdb.firebaseio.com",
+    "project_id": "proyecto-definitivo11",
+    "storage_bucket": "proyecto-definitivo11.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef1234567890",
+        "mobilesdk_app_id": "1:768644992880:android:9901f2c3948fab27a049b5",
         "android_client_info": {
           "package_name": "com.example.proyecto_definitivo"
         }
       },
-      "authentication_info": {
-        "google_id_token_client_id": "123456789012-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com"
-      },
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "dummy_api_key"
+          "current_key": "AIzaSyDY1rPavNWKN7UQfDOtMdYKB8a0BtUrkXc"
         }
       ],
       "services": {
