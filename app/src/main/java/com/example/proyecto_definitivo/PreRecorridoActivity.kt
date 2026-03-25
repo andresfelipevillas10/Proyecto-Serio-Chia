@@ -98,6 +98,7 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
                 val intent = Intent(this, NavegacionActivaActivity::class.java)
                 intent.putExtra("rutaId", rutaId)
                 intent.putExtra("rutaNombre", rutaNombre)
+                intent.putExtra("rutaRadio", rutaRadio)
                 // ¡SÚPER IMPORTANTE! Le pasamos el ID del recorrido a la Navegación Activa
                 // para que sepa a quién debe ponerle "finalizado" cuando terminen.
                 intent.putExtra("recorridoId", nuevoRecorridoId)

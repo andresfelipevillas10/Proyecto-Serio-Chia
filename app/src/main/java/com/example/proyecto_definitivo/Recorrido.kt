@@ -8,5 +8,7 @@ data class Recorrido(
     var inicioTiempo : Long =0L,
     var finTiempo:Long=0L,
     var tiempoTotalMs: Long=0L,
+    var latitudActual: Double = 0.0,
+    var longitudActual: Double = 0.0,
     var estado:String= "en_proceso"
 )
