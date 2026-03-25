@@ -32,6 +32,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     // Vistas de la interfaz moderna
     private lateinit var mapNavegacion: GoogleMap
     private var pathPolyline: Polyline? = null
+    private var plannedRoutePolyline: Polyline? = null
     private val visitedPoints = mutableListOf<LatLng>()
     private lateinit var tvActiveNextStop: TextView
     private lateinit var tvActiveDistance: TextView
@@ -136,11 +137,42 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun dibujarPuntos() {
         mapNavegacion.clear()
+
+        // 1. Dibujar la línea de la ruta planeada
+        val polylineOptions = PolylineOptions()
+            .color(Color.GRAY)
+            .width(10f)
+            .pattern(listOf(Dash(20f), Gap(10f))) // Línea punteada para diferenciar
+
+        for (punto in listaPuntos) {
+            polylineOptions.add(LatLng(punto.latitud, punto.longitud))
+        }
+        plannedRoutePolyline = mapNavegacion.addPolyline(polylineOptions)
+
+        // 2. Dibujar Marcadores
         for (punto in listaPuntos) {
             val posicion = LatLng(punto.latitud, punto.longitud)
-            val color = if (punto.Tipo == "origen") BitmapDescriptorFactory.HUE_GREEN else BitmapDescriptorFactory.HUE_AZURE
-            mapNavegacion.addMarker(MarkerOptions().position(posicion).title(punto.nombre).icon(BitmapDescriptorFactory.defaultMarker(color)))
+            val colorMarcador = when (punto.Tipo) {
+                "origen" -> BitmapDescriptorFactory.HUE_GREEN
+                "fin" -> BitmapDescriptorFactory.HUE_RED
+                else -> BitmapDescriptorFactory.HUE_AZURE
+            }
+            mapNavegacion.addMarker(MarkerOptions()
+                .position(posicion)
+                .title(punto.nombre)
+                .icon(BitmapDescriptorFactory.defaultMarker(colorMarcador)))
         }
+
+        // 3. Restaurar la línea de recorrido real (traveled path)
+        pathPolyline = mapNavegacion.addPolyline(
+            PolylineOptions()
+                .addAll(visitedPoints)
+                .color(Color.BLUE)
+                .width(12f)
+                .jointType(JointType.ROUND)
+                .startCap(RoundCap())
+                .endCap(RoundCap())
+        )
     }
 
     private fun configurarMotorUbicacion() {
@@ -174,7 +206,20 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // --- NUEVO: Actualizar la línea de recorrido ---
         visitedPoints.add(posicionActual)
-        pathPolyline?.points = visitedPoints
+
+        if (pathPolyline == null) {
+            pathPolyline = mapNavegacion.addPolyline(
+                PolylineOptions()
+                    .addAll(visitedPoints)
+                    .color(Color.BLUE)
+                    .width(12f)
+                    .jointType(JointType.ROUND)
+                    .startCap(RoundCap())
+                    .endCap(RoundCap())
+            )
+        } else {
+            pathPolyline?.points = visitedPoints
+        }
 
         // --- NUEVO: Actualizar posición en tiempo real en Firebase ---
         if (recorridoId.isNotEmpty()) {
@@ -196,16 +241,16 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         Location.distanceBetween(location.latitude, location.longitude, puntoEsperado.latitud, puntoEsperado.longitud, resultados)
         val distanciaMetros = resultados[0]
 
-        // Actualizar UI con la distancia restante
+        // Actualizar UI con la distancia restante cada que nos movemos
         actualizarTarjetaProximaParada(distanciaMetros)
 
         // 4. ¿Llegamos al punto?
         if (distanciaMetros <= rutaRadio) {
             registrarLlegadaEnFirebase(puntoEsperado)
+            Toast.makeText(this, "¡Llegaste a ${puntoEsperado.nombre}!", Toast.LENGTH_SHORT).show()
             indicePuntoActual++
 
             if (indicePuntoActual < listaPuntos.size) {
-                Toast.makeText(this, "¡Llegaste a ${puntoEsperado.nombre}!", Toast.LENGTH_SHORT).show()
                 actualizarTarjetaProximaParada(null) // Prepara el siguiente
             } else {
                 tvActiveNextStop.text = "Ruta Completada"
@@ -226,6 +271,9 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
                 val segundos = distanciaAproximada / 8.3f
                 val minutos = (segundos / 60).toInt()
                 tvActiveTime.text = if (minutos < 1) "aprox. 1 min" else "aprox. $minutos min"
+            } else {
+                tvActiveDistance.text = "--"
+                tvActiveTime.text = "Calculando..."
             }
         }
     }
