@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
@@ -18,11 +19,10 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 
@@ -31,6 +31,8 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // Vistas de la interfaz moderna
     private lateinit var mapNavegacion: GoogleMap
+    private var pathPolyline: Polyline? = null
+    private val visitedPoints = mutableListOf<LatLng>()
     private lateinit var tvActiveNextStop: TextView
     private lateinit var tvActiveDistance: TextView
     private lateinit var tvActiveTime: TextView
@@ -69,6 +71,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         // 2. Recibir Datos
         rutaId = intent.getStringExtra("rutaId") ?: ""
         recorridoId = intent.getStringExtra("recorridoId") ?: "" // Recibimos el ID del registro en BD
+        rutaRadio = intent.getFloatExtra("rutaRadio", 30f)
 
         // 3. Configurar Mapa
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapNavegacion) as SupportMapFragment
@@ -101,13 +104,24 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         mapNavegacion.uiSettings.isCompassEnabled = true
         mapNavegacion.setPadding(0, 300, 0, 0) // Bajamos el centro del mapa para que no lo tape la tarjeta superior
 
+        // Inicializar el Polyline del recorrido real
+        pathPolyline = mapNavegacion.addPolyline(
+            PolylineOptions()
+                .color(Color.BLUE)
+                .width(12f)
+                .jointType(JointType.ROUND)
+                .startCap(RoundCap())
+                .endCap(RoundCap())
+        )
+
         habilitarCapaUbicacion()
     }
 
     private fun cargarPuntosRuta() {
         if (rutaId.isEmpty()) return
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        db.child("rutas").child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
+        db.child("rutas").child(currentUserId).child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
             listaPuntos.clear()
             for (puntoSnap in snapshot.children) {
                 val punto = puntoSnap.getValue(PuntoRuta::class.java)
@@ -157,6 +171,18 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         // 1. Centrar cámara en el conductor
         val posicionActual = LatLng(location.latitude, location.longitude)
         mapNavegacion.animateCamera(CameraUpdateFactory.newLatLngZoom(posicionActual, 18f))
+
+        // --- NUEVO: Actualizar la línea de recorrido ---
+        visitedPoints.add(posicionActual)
+        pathPolyline?.points = visitedPoints
+
+        // --- NUEVO: Actualizar posición en tiempo real en Firebase ---
+        if (recorridoId.isNotEmpty()) {
+            db.child("recorridos").child(recorridoId).updateChildren(mapOf(
+                "latitudActual" to location.latitude,
+                "longitudActual" to location.longitude
+            ))
+        }
 
         // 2. Actualizar Velocímetro
         val velocidadKmH = (location.speed * 3.6).toInt() // Convertir m/s a km/h
