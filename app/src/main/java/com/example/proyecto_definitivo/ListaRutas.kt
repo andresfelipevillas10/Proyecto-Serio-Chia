@@ -15,14 +15,13 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
-class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
+class ListaRutas : AppCompatActivity() {
 
-    // 1. Declaramos las nuevas vistas del diseño Tailwind
     private lateinit var rvConfigRutas: RecyclerView
     private lateinit var fabAddRoute: ExtendedFloatingActionButton
     private lateinit var btnBackConfig: ImageButton
+    private lateinit var bottomNav: BottomNavigationView
 
-    // Tu lógica de Firebase intacta
     private val db = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
     private val listaRutas = mutableListOf<Ruta>()
@@ -32,29 +31,57 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_configurar_rutas)
 
-        // 1. Enlazamos los IDs del XML
+        initViews()
+        setupBottomNav()
+        setupRecyclerView()
+        setupFirebaseListeners()
+    }
+
+    private fun initViews() {
         rvConfigRutas = findViewById(R.id.rvConfigRutas)
         fabAddRoute = findViewById(R.id.fabAddRoute)
         btnBackConfig = findViewById(R.id.btnBackConfig)
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
+        bottomNav = findViewById(R.id.bottomNav)
 
-        // 2. Configuración del Bottom Nav (Conexión Vital)
-        bottomNav.selectedItemId = R.id.nav_routes // Resalta el icono de Rutas
+        btnBackConfig.setOnClickListener {
+            startActivity(Intent(this, HomeRutasActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            })
+            overridePendingTransition(0, 0)
+            finish()
+        }
+
+        fabAddRoute.setOnClickListener {
+            startActivity(Intent(this, CrearRuta::class.java))
+        }
+    }
+
+    private fun setupBottomNav() {
+        bottomNav.selectedItemId = R.id.nav_routes
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    // Volver al Dashboard principal
-                    startActivity(Intent(this, HomeRutasActivity::class.java))
-                    overridePendingTransition(0, 0) // Transición instantánea
-                    finish()
+                    startActivity(Intent(this, HomeRutasActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    })
+                    overridePendingTransition(0, 0)
                     true
                 }
-                R.id.nav_routes -> true // Ya estamos aquí
-                else -> true
+                R.id.nav_routes -> true
+                R.id.nav_stats -> {
+                    Toast.makeText(this, getString(R.string.stats_development), Toast.LENGTH_SHORT).show()
+                    false
+                }
+                R.id.nav_settings -> {
+                    Toast.makeText(this, getString(R.string.opening_profile), Toast.LENGTH_SHORT).show()
+                    false
+                }
+                else -> false
             }
         }
+    }
 
-        // 3. Setup del RecyclerView
+    private fun setupRecyclerView() {
         rvConfigRutas.layoutManager = LinearLayoutManager(this)
         rutaAdapter = RutaAdapter(
             listaRutas = listaRutas,
@@ -74,26 +101,11 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
             }
         )
         rvConfigRutas.adapter = rutaAdapter
-
-        // 4. Clics de botones
-        btnBackConfig.setOnClickListener {
-            // En lugar de finish(), mejor volver al Home para asegurar flujo
-            startActivity(Intent(this, HomeRutasActivity::class.java))
-            overridePendingTransition(0, 0)
-            finish()
-        }
-
-        fabAddRoute.setOnClickListener {
-            // Al crear, se mantiene el contexto de "Inicio"
-            startActivity(Intent(this, CrearRuta::class.java))
-        }
-
-        cargarRutas()
     }
-    private fun cargarRutas() {
+
+    private fun setupFirebaseListeners() {
         val currentUserId = auth.currentUser?.uid ?: return
 
-        // Quitamos el ProgressBar nativo porque tu diseño nuevo es más limpio
         db.child("rutas").child(currentUserId).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 listaRutas.clear()

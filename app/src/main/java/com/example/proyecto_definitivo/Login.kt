@@ -17,7 +17,7 @@ class Login : AppCompatActivity() {
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnIngresar: MaterialButton
     private lateinit var tvRegister: TextView
-     private lateinit var tvOlvidoPass: TextView
+    private lateinit var tvOlvidoPass: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,17 +25,22 @@ class Login : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        // IDs actualizados según el nuevo XML
+        initViews()
+        setupListeners()
+    }
+
+    private fun initViews() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnIngresar = findViewById(R.id.btnLogin)
         tvRegister = findViewById(R.id.tvRegister)
         tvOlvidoPass = findViewById(R.id.tvOlvidoPassword)
 
-        // Aplicar el formato HTML al texto de registro
-        val textoRegistro = "¿Eres nuevo en el camino? <font color='#006a37'><b>Regístrate</b></font>"
+        val textoRegistro = getString(R.string.new_user)
         tvRegister.text = HtmlCompat.fromHtml(textoRegistro, HtmlCompat.FROM_HTML_MODE_LEGACY)
+    }
 
+    private fun setupListeners() {
         btnIngresar.setOnClickListener { validateAndLogin() }
 
         tvRegister.setOnClickListener {
@@ -45,7 +50,6 @@ class Login : AppCompatActivity() {
         tvOlvidoPass.setOnClickListener {
             startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
-
     }
 
     private fun validateAndLogin() {
