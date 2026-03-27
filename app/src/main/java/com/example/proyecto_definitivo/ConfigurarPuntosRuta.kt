@@ -1,6 +1,7 @@
 package com.example.proyecto_definitivo
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -23,6 +24,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -30,11 +32,12 @@ import com.google.firebase.database.FirebaseDatabase
 class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var googleMap: GoogleMap
-    // Nuevas vistas de tu XML Paso 2
     private lateinit var btnRecargarPuntos: MaterialButton
     private lateinit var btnBackPaso2: ImageButton
     private lateinit var btnGuardarConfiguracion: MaterialButton
     private lateinit var tvContadorPuntos: TextView
+    private lateinit var bottomNav: BottomNavigationView
+    private lateinit var recyclerPuntos: androidx.recyclerview.widget.RecyclerView
 
     private val db = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
@@ -48,38 +51,81 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 1. APUNTAMOS AL NUEVO DISEÑO
         setContentView(R.layout.activity_crear_ruta_paso2)
-
-        // 2. ENLAZAMOS LOS NUEVOS IDs
-        btnRecargarPuntos = findViewById(R.id.btnRecargarPuntos)
-        btnBackPaso2 = findViewById(R.id.btnBackPaso2)
-        btnGuardarConfiguracion = findViewById(R.id.btnGuardarConfiguracion)
-        tvContadorPuntos = findViewById(R.id.tvContadorPuntos)
 
         rutaId = intent.getStringExtra("rutaId") ?: ""
         rutaNombre = intent.getStringExtra("rutaNombre") ?: ""
         rutaRadio = intent.getFloatExtra("rutaRadio", 30f)
 
-        // Botones de navegación
-        btnBackPaso2.setOnClickListener { finish() }
-        btnGuardarConfiguracion.setOnClickListener {
-            Toast.makeText(this, getString(R.string.btn_login), Toast.LENGTH_SHORT).show()
-            finish() // Cierra y vuelve al menú
-        }
+        initViews()
+        setupBottomNav()
+        setupRecyclerView()
+        setupListeners()
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapConfigurarPuntos) as SupportMapFragment
         mapFragment.getMapAsync(this)
+    }
 
-        btnRecargarPuntos.setOnClickListener { cargarPuntosRuta() }
+    private fun initViews() {
+        btnRecargarPuntos = findViewById(R.id.btnRecargarPuntos)
+        btnBackPaso2 = findViewById(R.id.btnBackPaso2)
+        btnGuardarConfiguracion = findViewById(R.id.btnGuardarConfiguracion)
+        tvContadorPuntos = findViewById(R.id.tvContadorPuntos)
+        bottomNav = findViewById(R.id.bottomNav)
+        recyclerPuntos = findViewById(R.id.recyclerPuntosConfiguracion)
+    }
 
-        val recyclerPuntos = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerPuntosConfiguracion)
+    private fun setupBottomNav() {
+        bottomNav.selectedItemId = R.id.nav_routes
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, HomeRutasActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    })
+                    overridePendingTransition(0, 0)
+                    true
+                }
+                R.id.nav_routes -> {
+                    startActivity(Intent(this, ListaRutas::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    })
+                    overridePendingTransition(0, 0)
+                    true
+                }
+                R.id.nav_stats -> {
+                    Toast.makeText(this, getString(R.string.stats_development), Toast.LENGTH_SHORT).show()
+                    false
+                }
+                R.id.nav_settings -> {
+                    Toast.makeText(this, getString(R.string.opening_profile), Toast.LENGTH_SHORT).show()
+                    false
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun setupRecyclerView() {
         puntoAdapter = PuntoAdapter(
             listaPuntos,
             onModificarClick = { punto -> mostrarDialogoAgregarPunto(LatLng(punto.latitud, punto.longitud), punto) },
             onEliminarClick = { punto -> eliminarPuntoFirebase(punto) }
         )
+        recyclerPuntos.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
         recyclerPuntos.adapter = puntoAdapter
+    }
+
+    private fun setupListeners() {
+        btnBackPaso2.setOnClickListener { finish() }
+        btnGuardarConfiguracion.setOnClickListener {
+            Toast.makeText(this, getString(R.string.route_configured_success), Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ListaRutas::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            })
+            finish()
+        }
+        btnRecargarPuntos.setOnClickListener { cargarPuntosRuta() }
     }
 
     override fun onMapReady(map: GoogleMap) {

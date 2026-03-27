@@ -71,8 +71,9 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // 2. Recibir Datos
         rutaId = intent.getStringExtra("rutaId") ?: ""
-        recorridoId = intent.getStringExtra("recorridoId") ?: "" // Recibimos el ID del registro en BD
+        recorridoId = intent.getStringExtra("recorridoId") ?: ""
         rutaRadio = intent.getFloatExtra("rutaRadio", 30f)
+        indicePuntoActual = intent.getIntExtra("indice_actual", 0)
 
         // 3. Configurar Mapa
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapNavegacion) as SupportMapFragment
@@ -130,7 +131,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             listaPuntos.sortBy { it.orden }
 
             dibujarPuntos()
-            actualizarTarjetaProximaParada(null) // Inicializa la tarjeta con el primer punto
+            actualizarTarjetaProximaParada(null)
         }
     }
 
@@ -253,7 +254,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         // 4. ¿Llegamos al punto?
         if (distanciaMetros <= rutaRadio) {
             registrarLlegadaEnFirebase(puntoEsperado)
-            Toast.makeText(this, "¡Llegaste a ${puntoEsperado.nombre}!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.reached_point, puntoEsperado.nombre), Toast.LENGTH_SHORT).show()
             indicePuntoActual++
 
             if (indicePuntoActual < listaPuntos.size) {
@@ -286,11 +287,11 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun registrarLlegadaEnFirebase(punto: PuntoRuta) {
         if (recorridoId.isEmpty()) return
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         val ahora = System.currentTimeMillis()
         val tiempoDesdeAnterior = ahora - tiempoUltimoPunto
 
-        // Guardamos el registro del punto (Usando la misma lógica que tenías)
         val puntoRegistrado = mapOf(
             "puntoId" to punto.id,
             "nombre" to punto.nombre,
@@ -299,6 +300,14 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         )
 
         db.child("recorridos").child(recorridoId).child("puntosRegistrados").child(punto.id).setValue(puntoRegistrado)
+
+        // Actualizar el progreso en users/{userId}/ruta_actual
+        val updates = mapOf(
+            "puntos_completados" to (indicePuntoActual + 1),
+            "indice_actual" to (indicePuntoActual + 1)
+        )
+        db.child("users").child(currentUserId).child("ruta_actual").updateChildren(updates)
+
         tiempoUltimoPunto = ahora
     }
 
@@ -320,7 +329,8 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun finalizarRecorrido(esAutomatico: Boolean) {
-        fusedLocationClient.removeLocationUpdates(locationCallback) // Apagar GPS
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
         if (recorridoId.isNotEmpty()) {
             val estadoFinal = if (esAutomatico) "finalizado_automatico" else "finalizado_manual"
@@ -329,16 +339,18 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
                 "estado" to estadoFinal
             )
             db.child("recorridos").child(recorridoId).updateChildren(actualizacion).addOnSuccessListener {
+                // Limpiar la ruta actual del usuario
+                if (currentUserId.isNotEmpty()) {
+                    db.child("users").child(currentUserId).child("ruta_actual").removeValue()
+                }
 
-                // ¡EL CAMBIO ESTÁ AQUÍ!
-                Toast.makeText(this, "Recorrido finalizado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.route_finished), Toast.LENGTH_SHORT).show()
 
-                // Lanzamos la pantalla de Resumen Final pasándole el ID del recorrido
                 val intent = Intent(this, ResumenRecorridoActivity::class.java)
                 intent.putExtra("recorridoId", recorridoId)
                 startActivity(intent)
 
-                finish() // Ahora sí cerramos la navegación
+                finish()
             }
         } else {
             finish()

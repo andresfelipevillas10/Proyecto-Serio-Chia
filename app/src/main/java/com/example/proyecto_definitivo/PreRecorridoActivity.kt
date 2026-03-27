@@ -69,7 +69,7 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
         // ¡EL GRAN BOTÓN INICIAR!
         btnStartDrivingMode.setOnClickListener {
             if (listaPuntos.isEmpty()) {
-                Toast.makeText(this, "Esta ruta no tiene puntos configurados.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.no_points_configured), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -90,24 +90,33 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
                 estado = "en_proceso"
             )
 
-            // 3. Lo guardamos en Firebase y SI ES EXITOSO, abramos la Navegación
+            // 3. Lo guardamos en Firebase y SI ES EXITOSO, guardamos estado activo y abramos la Navegación
             recorridosRef.setValue(recorridoDeHoy).addOnSuccessListener {
+                val rutaActualData = mapOf(
+                    "recorridoId" to nuevoRecorridoId,
+                    "rutaId" to rutaId,
+                    "nombre" to rutaNombre,
+                    "puntos_completados" to 0,
+                    "total_puntos" to listaPuntos.size,
+                    "radioDeteccion" to rutaRadio,
+                    "indice_actual" to 0
+                )
+                db.child("users").child(conductorId).child("ruta_actual").setValue(rutaActualData)
 
-                Toast.makeText(this, "¡Recorrido Iniciado!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.route_started), Toast.LENGTH_SHORT).show()
 
-                val intent = Intent(this, NavegacionActivaActivity::class.java)
-                intent.putExtra("rutaId", rutaId)
-                intent.putExtra("rutaNombre", rutaNombre)
-                intent.putExtra("rutaRadio", rutaRadio)
-                // ¡SÚPER IMPORTANTE! Le pasamos el ID del recorrido a la Navegación Activa
-                // para que sepa a quién debe ponerle "finalizado" cuando terminen.
-                intent.putExtra("recorridoId", nuevoRecorridoId)
-
+                val intent = Intent(this, NavegacionActivaActivity::class.java).apply {
+                    putExtra("rutaId", rutaId)
+                    putExtra("rutaNombre", rutaNombre)
+                    putExtra("rutaRadio", rutaRadio)
+                    putExtra("recorridoId", nuevoRecorridoId)
+                    putExtra("indice_actual", 0)
+                }
                 startActivity(intent)
-                finish() // Cerramos esta pantalla para que no pueda volver atrás con el botón del celular
+                finish()
 
             }.addOnFailureListener {
-                Toast.makeText(this, "Error de red al iniciar", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.network_error_start), Toast.LENGTH_SHORT).show()
             }
         }
     } // <-- Aquí termina correctamente el onCreate

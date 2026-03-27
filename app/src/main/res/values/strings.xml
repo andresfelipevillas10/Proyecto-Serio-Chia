@@ -32,6 +32,7 @@
     <string name="error_short_password">La contraseña debe tener al menos 6 caracteres</string>
     <string name="registration_complete">Registro completo</string>
     <string name="db_error">Error en base de datos: %1$s</string>
+    <string name="hello_user">¡Hola, %1$s!</string>
     <string name="auth_failed">Error de autenticación: %1$s</string>
     <string name="login_failed">Error: usuario no encontrado o credenciales incorrectas</string>
     <string name="instructions_sent">Instrucciones enviadas al correo</string>
@@ -45,7 +46,7 @@
     <string name="label_password">CONTRASEÑA</string>
     <string name="forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="btn_login">Iniciar Sesión</string>
-    <string name="new_user">¿Eres nuevo en el camino? <font color="#006a37"><b>Regístrate</b></font></string>
+    <string name="new_user">¿Eres nuevo en el camino? &lt;font color="#006a37"&gt;&lt;b&gt;Regístrate&lt;/b&gt;&lt;/font&gt;</string>
 
 
     <!-- Home Strings -->
@@ -64,4 +65,15 @@
     <string name="origin_exists">Ya existe un origen</string>
     <string name="destination_exists">Ya existe un fin</string>
     <string name="move_marker_toast">Debe mover el marcador en el mapa para actualizar</string>
+    <string name="stats_development">Estadísticas en desarrollo...</string>
+    <string name="opening_profile">Abriendo Perfil...</string>
+    <string name="gps_nav_start">Iniciando navegación GPS...</string>
+    <string name="route_created_step1">Etapa 1 lista. Configura el mapa.</string>
+    <string name="saving">Guardando...</string>
+    <string name="incident_reported">Reporte de incidente abierto</string>
+    <string name="route_finished">Recorrido finalizado</string>
+    <string name="route_started">¡Recorrido Iniciado!</string>
+    <string name="no_points_configured">Esta ruta no tiene puntos configurados.</string>
+    <string name="network_error_start">Error de red al iniciar</string>
+    <string name="reached_point">¡Llegaste a %1$s!</string>
 </resources>
