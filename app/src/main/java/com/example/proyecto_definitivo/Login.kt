@@ -6,6 +6,7 @@ import android.util.Patterns
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.HtmlCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
@@ -15,27 +16,36 @@ class Login : AppCompatActivity() {
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnIngresar: MaterialButton
-    private lateinit var btnRegister: MaterialButton
-    private lateinit var tvOlvidoPass: TextView
+    private lateinit var tvRegister: TextView
+     private lateinit var tvOlvidoPass: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
         auth = FirebaseAuth.getInstance()
-        etEmail = findViewById(R.id.email)
-        etPassword = findViewById(R.id.password)
-        btnIngresar = findViewById(R.id.ingresar)
-        btnRegister = findViewById(R.id.registrar)
+
+        // IDs actualizados según el nuevo XML
+        etEmail = findViewById(R.id.etEmail)
+        etPassword = findViewById(R.id.etPassword)
+        btnIngresar = findViewById(R.id.btnLogin)
+        tvRegister = findViewById(R.id.tvRegister)
         tvOlvidoPass = findViewById(R.id.tvOlvidoPassword)
 
+        // Aplicar el formato HTML al texto de registro
+        val textoRegistro = "¿Eres nuevo en el camino? <font color='#006a37'><b>Regístrate</b></font>"
+        tvRegister.text = HtmlCompat.fromHtml(textoRegistro, HtmlCompat.FROM_HTML_MODE_LEGACY)
+
         btnIngresar.setOnClickListener { validateAndLogin() }
-        btnRegister.setOnClickListener {
+
+        tvRegister.setOnClickListener {
             startActivity(Intent(this, Register::class.java))
         }
+
         tvOlvidoPass.setOnClickListener {
             startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
+
     }
 
     private fun validateAndLogin() {
@@ -43,12 +53,12 @@ class Login : AppCompatActivity() {
         val pass = etPassword.text.toString().trim()
 
         if (email.isEmpty() || pass.isEmpty()) {
-            showToast(getString(R.string.error_complete_fields))
+            showToast("Por favor, completa todos los campos")
             return
         }
 
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            showToast(getString(R.string.error_invalid_email))
+            showToast("El formato del correo no es válido")
             return
         }
 
@@ -62,7 +72,8 @@ class Login : AppCompatActivity() {
                     startActivity(Intent(this, HomeRutasActivity::class.java))
                     finish()
                 } else {
-                    showToast(getString(R.string.login_failed))
+                    // Muestra el error real de Firebase para debuguear rápido
+                    showToast("Error: ${task.exception?.message}")
                 }
             }
     }

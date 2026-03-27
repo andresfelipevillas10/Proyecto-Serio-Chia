@@ -1,13 +1,22 @@
 package com.example.proyecto_definitivo
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.util.Patterns
-import android.widget.ImageView
+import android.widget.AutoCompleteTextView
+import android.widget.ArrayAdapter
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
@@ -24,9 +33,12 @@ class Register : AppCompatActivity() {
     private lateinit var etDireccion: TextInputEditText
     private lateinit var etEmailReg: TextInputEditText
     private lateinit var etPassReg: TextInputEditText
-    private lateinit var btnFinalizar: MaterialButton
-    private lateinit var btnBack: ImageView
-    private lateinit var tvLoginRedirect: TextView
+    private lateinit var etNoBus: TextInputEditText
+    private lateinit var atvTurno: AutoCompleteTextView
+    private lateinit var btnRegister: MaterialButton
+    private lateinit var btnBack: ImageButton
+    private lateinit var btnPickPhoto: FloatingActionButton
+    private lateinit var tvToLogin: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,56 +47,89 @@ class Register : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         dbRef = FirebaseDatabase.getInstance().getReference("users")
 
-        etNombre = findViewById(R.id.nombre)
-        etApellido = findViewById(R.id.apellido)
-        etTelefono = findViewById(R.id.telefono)
-        etDireccion = findViewById(R.id.direccion)
-        etEmailReg = findViewById(R.id.emailregister)
-        etPassReg = findViewById(R.id.passwordregister)
-        btnFinalizar = findViewById(R.id.btnDoRegister)
-        btnBack = findViewById(R.id.btnBack)
-        tvLoginRedirect = findViewById(R.id.tvLoginRedirect)
+        initViews()
+        setupTurnoDropdown()
+        setupLoginLink()
 
-        btnFinalizar.setOnClickListener { validateAndRegister() }
+        btnRegister.setOnClickListener { validateAndRegister() }
         btnBack.setOnClickListener { finish() }
-        tvLoginRedirect.setOnClickListener { finish() }
+        tvToLogin.setOnClickListener { finish() }
+
+        btnPickPhoto.setOnClickListener {
+            Toast.makeText(this, "Próximamente: Selector de fotos", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun initViews() {
+        etNombre     = findViewById(R.id.etNombre)
+        etApellido   = findViewById(R.id.etApellido)
+        etTelefono   = findViewById(R.id.etTelefono)
+        etDireccion  = findViewById(R.id.etDireccion)
+        etEmailReg   = findViewById(R.id.etEmailReg)
+        etPassReg    = findViewById(R.id.etPassReg)
+        etNoBus      = findViewById(R.id.etNoBus)
+        atvTurno     = findViewById(R.id.atvTurno)
+        btnRegister  = findViewById(R.id.btnRegister)
+        btnBack      = findViewById(R.id.btnBack)
+        btnPickPhoto = findViewById(R.id.btnPickPhoto)
+        tvToLogin    = findViewById(R.id.tvToLogin)
+    }
+
+    private fun setupTurnoDropdown() {
+        val opciones = listOf("Mañana", "Tarde", "Noche")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
+        atvTurno.setAdapter(adapter)
+        atvTurno.setText(opciones[0], false) // valor por defecto sin filtrar
+    }
+
+    // Colorea "Iniciar Sesión" en verde sin necesidad de HtmlCompat
+    private fun setupLoginLink() {
+        val full = "¿Ya tienes una cuenta? Iniciar Sesión"
+        val spannable = SpannableString(full)
+        val start = full.indexOf("Iniciar Sesión")
+        val green = ContextCompat.getColor(this, R.color.primary_zenda)
+
+        spannable.setSpan(ForegroundColorSpan(green), start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannable.setSpan(StyleSpan(Typeface.BOLD),    start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        tvToLogin.text = spannable
     }
 
     private fun validateAndRegister() {
-        val nom = etNombre.text.toString().trim()
-        val ape = etApellido.text.toString().trim()
-        val tel = etTelefono.text.toString().trim()
-        val dir = etDireccion.text.toString().trim()
+        val nom   = etNombre.text.toString().trim()
+        val ape   = etApellido.text.toString().trim()
+        val tel   = etTelefono.text.toString().trim()
+        val dir   = etDireccion.text.toString().trim()
         val email = etEmailReg.text.toString().trim()
-        val pass = etPassReg.text.toString().trim()
+        val pass  = etPassReg.text.toString().trim()
+        val bus   = etNoBus.text.toString().trim()
+        val turno = atvTurno.text.toString()
 
-        if (nom.isEmpty() || ape.isEmpty() || tel.isEmpty() || dir.isEmpty() || email.isEmpty() || pass.isEmpty()) {
-            showToast(getString(R.string.error_complete_fields))
+        if (nom.isEmpty() || ape.isEmpty() || tel.isEmpty() || email.isEmpty() || pass.isEmpty() || bus.isEmpty()) {
+            Toast.makeText(this, "Por favor, llena todos los campos", Toast.LENGTH_SHORT).show()
             return
         }
-
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            showToast(getString(R.string.error_invalid_email))
+            Toast.makeText(this, "Email no válido", Toast.LENGTH_SHORT).show()
             return
         }
-
         if (pass.length < 6) {
-            showToast(getString(R.string.error_short_password))
+            Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val userData = User(null, nom, ape, tel, dir, email)
+        val userData = User(uid = null, nombre = nom, apellido = ape, telefono = tel,
+            direccion = dir, email = email, noBus = bus, turno = turno)
         signUp(email, pass, userData)
     }
 
     private fun signUp(email: String, pass: String, userData: User) {
         auth.createUserWithEmailAndPassword(email, pass)
-            .addOnCompleteListener(this) { task ->
+            .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid ?: ""
+                    val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
                     addUserDatabase(userId, userData.copy(uid = userId))
                 } else {
-                    showToast(getString(R.string.auth_failed, task.exception?.message))
+                    Toast.makeText(this, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
     }
@@ -92,17 +137,12 @@ class Register : AppCompatActivity() {
     private fun addUserDatabase(uid: String, user: User) {
         dbRef.child(uid).setValue(user)
             .addOnSuccessListener {
-                auth.signOut()
-                showToast(getString(R.string.registration_complete))
+                Toast.makeText(this, "¡Conductor registrado!", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, Login::class.java))
                 finish()
             }
-            .addOnFailureListener {
-                showToast(getString(R.string.db_error, it.message))
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error al guardar: ${e.message}", Toast.LENGTH_LONG).show()
             }
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

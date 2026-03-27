@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Proyecto Serio Chía</string>
+
     <string name="welcome_conductor">Bienvenido, Conductor</string>
     <string name="map_reserved_space">Espacio reservado para el mapa y las rutas.</string>
     <string name="logout_test">Cerrar Sesión (Modo Test)</string>
@@ -35,6 +35,18 @@
     <string name="auth_failed">Error de autenticación: %1$s</string>
     <string name="login_failed">Error: usuario no encontrado o credenciales incorrectas</string>
     <string name="instructions_sent">Instrucciones enviadas al correo</string>
+
+    <string name="app_name">Zenda</string>
+    <string name="login_title">Zenda</string>
+    <string name="login_subtitle">Tu ruta segura comienza aquí.</string>
+    <string name="login_welcome">BIENVENIDO AL CAMINO DE LA TRANQUILIDAD, CONDUCTOR.</string>
+    <string name="label_email">CORREO ELECTRÓNICO</string>
+    <string name="hint_email">nombre@zenda.com</string>
+    <string name="label_password">CONTRASEÑA</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="btn_login">Iniciar Sesión</string>
+    <string name="new_user">¿Eres nuevo en el camino? <font color="#006a37"><b>Regístrate</b></font></string>
+
 
     <!-- Home Strings -->
     <string name="loading_route_config">Cargando Configuración de Rutas...</string>

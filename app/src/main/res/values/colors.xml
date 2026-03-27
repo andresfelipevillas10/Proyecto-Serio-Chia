@@ -9,4 +9,45 @@
     <color name="primary_green">#006c49</color>
     <color name="dark_blue">#003366</color>
     <color name="border_gray">#e7e8e9</color>
+
+
+    <color name="primary_container">#008647</color>
+
+    <color name="surface_input">#F3F4F3</color>
+
+
+    <color name="outline_variant">#BDCABC</color>
+
+
+    <color name="surface_variant_light">#f3f4f3</color>
+
+
+    <!-- ── Colores principales Zenda ── -->
+    <color name="primary_zenda">#1A6B3A</color>
+    <color name="primary_zenda_dark">#145430</color>
+
+    <!-- ── Fondo ── -->
+    <color name="bg_zenda">#F5F5F0</color>
+
+    <!-- ── Inputs ── -->
+    <color name="input_bg">#EBEBE5</color>
+    <color name="input_stroke">#D4D4CC</color>
+    <color name="input_stroke_focused">#1A6B3A</color>
+
+    <!-- ── Textos ── -->
+    <color name="text_main">#1C1C1A</color>
+    <color name="text_variant">#6B6B66</color>
+    <color name="text_hint">#AEAEA8</color>
+    <color name="text_label">#4A4A47</color>
+
+    <!-- ── Acento tricolor (bandera Colombia) ── -->
+    <color name="accent_red">#CE1126</color>
+    <color name="accent_yellow">#FCD116</color>
+    <color name="accent_blue">#003087</color>
+
+    <!-- ── Botón gradiente (de login) ── -->
+    <color name="gradient_start">#1A6B3A</color>
+    <color name="gradient_end">#2E9B58</color>
+    <color name="input_stroke_Selector">#E1E3E2</color>
 </resources>
+

@@ -64,7 +64,7 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         // Botones de navegación
         btnBackPaso2.setOnClickListener { finish() }
         btnGuardarConfiguracion.setOnClickListener {
-            Toast.makeText(this, getString(R.string.route_configured_success), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.btn_login), Toast.LENGTH_SHORT).show()
             finish() // Cierra y vuelve al menú
         }
 
@@ -162,7 +162,7 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         btnCerrar.setOnClickListener { dialog.dismiss() }
 
         btnActualizarGps.setOnClickListener {
-            Toast.makeText(this, getString(R.string.move_marker_toast), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.btn_login), Toast.LENGTH_LONG).show()
         }
 
         btnGuardar.setOnClickListener {
@@ -186,7 +186,7 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         val currentUserId = auth.currentUser?.uid ?: return
         val otrosPuntos = listaPuntos.filter { it.id != idParaEditar }
 
-        if (otrosPuntos.any { it.orden == orden }) { Toast.makeText(this, getString(R.string.order_exists, orden), Toast.LENGTH_SHORT).show(); return }
+        if (otrosPuntos.any { it.orden == orden }) { Toast.makeText(this, getString(R.string.new_user, orden), Toast.LENGTH_SHORT).show(); return }
         if (tipo == "origen" && otrosPuntos.any { it.Tipo == "origen" }) { Toast.makeText(this, getString(R.string.origin_exists), Toast.LENGTH_SHORT).show(); return }
         if (tipo == "fin" && otrosPuntos.any { it.Tipo == "fin" }) { Toast.makeText(this, getString(R.string.destination_exists), Toast.LENGTH_SHORT).show(); return }
 

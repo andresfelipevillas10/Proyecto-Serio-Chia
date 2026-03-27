@@ -49,6 +49,5 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/notifications"
         app:tint="#001e40" />
 </LinearLayout>

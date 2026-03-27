@@ -51,7 +51,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
-            android:background="@drawable/bg_badge_activas"
             android:paddingHorizontal="12dp"
             android:paddingVertical="4dp"
             android:text="ACTIVAS"
