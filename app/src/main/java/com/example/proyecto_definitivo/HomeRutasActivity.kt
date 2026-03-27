@@ -20,31 +20,27 @@ class HomeRutasActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var dbRef: DatabaseReference
 
-    // Vistas del Dashboard
     private lateinit var tvGreeting: TextView
     private lateinit var tvRouteName: TextView
     private lateinit var tvProgressLabel: TextView
     private lateinit var routeProgress: ProgressBar
     private lateinit var cardActiveRoute: MaterialCardView
     private lateinit var btnFollowRoute: MaterialButton
-
-    // 🚨 EL CAMBIO CLAVE: Ahora Kotlin sabe que son MaterialCardView
     private lateinit var btnNewRoute: MaterialCardView
     private lateinit var btnReportIncident: MaterialCardView
-
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var badgeLive: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home_rutas) // Tu XML perfecto
+        setContentView(R.layout.activity_home_rutas)
 
         auth = FirebaseAuth.getInstance()
         val userId = auth.currentUser?.uid ?: ""
         dbRef = FirebaseDatabase.getInstance().getReference("users").child(userId)
 
         initViews()
-        loadUserData()
+        setupFirebaseListeners()
         setupBottomNav()
     }
 
@@ -65,8 +61,15 @@ class HomeRutasActivity : AppCompatActivity() {
 
         // Los CardViews tienen OnClickListener igual que los botones
         btnFollowRoute.setOnClickListener {
-            showToast("Iniciando navegación GPS...")
-            // Aquí irá el Intent a tu mapa
+            val userId = auth.currentUser?.uid ?: ""
+            FirebaseDatabase.getInstance().getReference("users").child(userId).child("ruta_actual")
+                .get().addOnSuccessListener { snapshot ->
+                    if (snapshot.exists()) {
+                        showToast(getString(R.string.gps_nav_start))
+                    } else {
+                        startActivity(Intent(this, ListaRutas::class.java))
+                    }
+                }
         }
 
         btnNewRoute.setOnClickListener {
@@ -78,28 +81,27 @@ class HomeRutasActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadUserData() {
+    private fun setupFirebaseListeners() {
         dbRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
-                    // 1. Saludo personalizado
                     val nombre = snapshot.child("nombre").value.toString()
-                    tvGreeting.text = "¡Hola, $nombre!"
+                    tvGreeting.text = getString(R.string.hello_user, nombre)
 
-                    // 2. Lógica de Ruta Activa
                     val rutaActiva = snapshot.child("ruta_actual").exists()
                     updateRouteUI(rutaActiva, snapshot)
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                showToast("Error al conectar con la base de datos")
+                showToast(getString(R.string.db_error, error.message))
             }
         })
     }
 
     private fun updateRouteUI(isActive: Boolean, snapshot: DataSnapshot) {
         if (isActive) {
+            cardActiveRoute.visibility = View.VISIBLE
             val nombreRuta = snapshot.child("ruta_actual/nombre").value.toString()
             val progreso = snapshot.child("ruta_actual/puntos_completados").value.toString()
             val total = snapshot.child("ruta_actual/total_puntos").value.toString()
@@ -115,40 +117,31 @@ class HomeRutasActivity : AppCompatActivity() {
             badgeLive.visibility = View.VISIBLE
             btnFollowRoute.text = "Seguir Ruta"
         } else {
-            // "MODO ZENDA": Motores apagados
-            tvRouteName.text = "Motores apagados. El camino te espera, conductor."
-            tvProgressLabel.text = "0/0"
-            routeProgress.progress = 0
-            badgeLive.visibility = View.GONE
-            btnFollowRoute.text = "Iniciar Jornada"
+            // El usuario pidió que la tarjeta principal no esté informada si no hay rutas
+            cardActiveRoute.visibility = View.GONE
         }
     }
 
     private fun setupBottomNav() {
-        // 1. Forzamos que al abrir el Dashboard, el ícono resaltado sea Home
         bottomNav.selectedItemId = R.id.nav_home
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> {
-                    // Ya estás en Home, no hacemos nada o refrescamos
-                    true
-                }
+                R.id.nav_home -> true
                 R.id.nav_routes -> {
-                    // 2. Ir a la pantalla de gestión de rutas (ListaRutas)
-                    val intent = Intent(this, ListaRutas::class.java)
-                    startActivity(intent)
-                    // Quitamos la animación para que parezca una sola app fluida
+                    startActivity(Intent(this, ListaRutas::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    })
                     overridePendingTransition(0, 0)
                     true
                 }
                 R.id.nav_stats -> {
-                    showToast("Estadísticas en desarrollo...")
-                    true
+                    showToast(getString(R.string.stats_development))
+                    false
                 }
                 R.id.nav_settings -> {
-                    showToast("Abriendo Perfil...")
-                    true
+                    showToast(getString(R.string.opening_profile))
+                    false
                 }
                 else -> false
             }

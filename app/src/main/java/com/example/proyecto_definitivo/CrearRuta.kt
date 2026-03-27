@@ -17,7 +17,6 @@ import com.google.firebase.database.FirebaseDatabase
 
 class CrearRuta : AppCompatActivity() {
 
-    // 1. Apuntamos a los IDs del nuevo diseño XML
     private lateinit var etNombreRuta: TextInputEditText
     private lateinit var etDescripcionRuta: TextInputEditText
     private lateinit var sbRadio: SeekBar
@@ -34,7 +33,12 @@ class CrearRuta : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_crear_ruta_paso1)
 
-        // 2. Enlazamos la vista con los nuevos IDs
+        initViews()
+        setupBottomNav()
+        setupListeners()
+    }
+
+    private fun initViews() {
         etNombreRuta = findViewById(R.id.etNombreRuta)
         etDescripcionRuta = findViewById(R.id.etDescRuta)
         sbRadio = findViewById(R.id.sbRadio)
@@ -44,13 +48,47 @@ class CrearRuta : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
         bottomNav = findViewById(R.id.bottomNav)
 
-        // Configurar botón de atrás
+        val opciones = arrayOf("Mañana 06:00 - 14:00", "Tarde 14:00 - 22:00", "Noche 22:00 - 06:00", "Personalizado")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
+        atvTurno.setAdapter(adapter)
+    }
+
+    private fun setupBottomNav() {
+        bottomNav.selectedItemId = R.id.nav_home
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, HomeRutasActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    })
+                    overridePendingTransition(0, 0)
+                    true
+                }
+                R.id.nav_routes -> {
+                    startActivity(Intent(this, ListaRutas::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    })
+                    overridePendingTransition(0, 0)
+                    true
+                }
+                R.id.nav_stats -> {
+                    Toast.makeText(this, getString(R.string.stats_development), Toast.LENGTH_SHORT).show()
+                    false
+                }
+                R.id.nav_settings -> {
+                    Toast.makeText(this, getString(R.string.opening_profile), Toast.LENGTH_SHORT).show()
+                    false
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun setupListeners() {
         btnBack.setOnClickListener { finish() }
 
-        // Configurar el Slider (SeekBar) del radio de detección
         sbRadio.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                // Forzamos a que el mínimo sea 10m
                 val valorReal = if (progress < 10) 10 else progress
                 tvRadioValor.text = "${valorReal}m"
             }
@@ -58,18 +96,6 @@ class CrearRuta : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        // Configurar el Dropdown de Horarios
-        val opciones = arrayOf("Mañana 06:00 - 14:00", "Tarde 14:00 - 22:00", "Noche 22:00 - 06:00", "Personalizado")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
-        atvTurno.setAdapter(adapter)
-
-        // En el onCreate de CrearRuta.kt
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
-
-// CAMBIO: Ahora resaltamos Home aunque estemos creando la ruta
-        bottomNav.selectedItemId = R.id.nav_home
-
-        // El botón Siguiente (Guarda en Firebase y pasa al mapa)
         btnSiguiente.setOnClickListener {
             guardarRuta()
         }
@@ -100,7 +126,7 @@ class CrearRuta : AppCompatActivity() {
 
         // Bloqueamos el botón y damos feedback visual mientras Firebase trabaja
         btnSiguiente.isEnabled = false
-        btnSiguiente.text = "Guardando..."
+        btnSiguiente.text = getString(R.string.saving)
 
         val rutaRef = db.child("rutas").child(currentUserId).push()
         val rutaId = rutaRef.key ?: ""
@@ -118,7 +144,7 @@ class CrearRuta : AppCompatActivity() {
 
         rutaRef.setValue(ruta)
             .addOnSuccessListener {
-                Toast.makeText(this, "Etapa 1 lista. Configura el mapa.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.route_created_step1), Toast.LENGTH_SHORT).show()
 
                 // EL CAMBIO MAESTRO: Saltamos directo al Paso 2
                 val intent = Intent(this, ConfigurarPuntosRuta::class.java)
