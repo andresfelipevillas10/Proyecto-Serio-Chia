@@ -77,8 +77,12 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
             val recorridosRef = db.child("recorridos").push()
             val nuevoRecorridoId = recorridosRef.key ?: ""
 
-            // Obtenemos el ID del conductor actual (Si aún no tienes el Auth listo, le ponemos un dummy temporal)
-            val conductorId = FirebaseAuth.getInstance().currentUser?.uid ?: "conductor_demo_123"
+            // Obtenemos el ID del conductor actual
+            val conductorId = FirebaseAuth.getInstance().currentUser?.uid
+            if (conductorId == null) {
+                Toast.makeText(this, "Error: Sesión no iniciada", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             // 2. Creamos el objeto con tu nueva clase
             val recorridoDeHoy = Recorrido(

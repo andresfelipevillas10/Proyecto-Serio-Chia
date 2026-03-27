@@ -131,7 +131,15 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             listaPuntos.sortBy { it.orden }
 
             dibujarPuntos()
-            actualizarTarjetaProximaParada(null)
+
+            // Si el índice recuperado es >= total de puntos, la ruta ya terminó
+            if (indicePuntoActual >= listaPuntos.size && listaPuntos.isNotEmpty()) {
+                tvActiveNextStop.text = "Ruta Completada"
+                tvActiveDistance.text = "0m"
+                finalizarRecorrido(esAutomatico = true)
+            } else {
+                actualizarTarjetaProximaParada(null)
+            }
         }
     }
 

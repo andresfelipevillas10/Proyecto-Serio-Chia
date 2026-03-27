@@ -73,7 +73,9 @@ class Login : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, pass)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, HomeRutasActivity::class.java))
+                    startActivity(Intent(this, HomeRutasActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    })
                     finish()
                 } else {
                     // Muestra el error real de Firebase para debuguear rápido
