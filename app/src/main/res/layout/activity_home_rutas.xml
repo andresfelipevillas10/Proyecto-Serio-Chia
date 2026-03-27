@@ -1,301 +1,376 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#F8F9FA">
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bg_zenda">
 
-    <include
-        android:id="@+id/header"
-        layout="@layout/layout_header"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+    <!-- ── Top bar ── -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/topBar"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:paddingHorizontal="20dp"
+            android:background="@color/bg_zenda"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
+        <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_bus"
+                app:tint="@color/primary_zenda"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Zenda"
+                android:textColor="@color/primary_zenda"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:layout_marginStart="8dp"
+                app:layout_constraintTop_toTopOf="@id/ivLogo"
+                app:layout_constraintBottom_toBottomOf="@id/ivLogo"
+                app:layout_constraintStart_toEndOf="@id/ivLogo"/>
+
+        <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivProfile"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/sample_avatar"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                android:padding="1dp"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ── Barra tricolor: anclada al topBar, NO al scroll ── -->
+    <LinearLayout
+            android:id="@+id/identityBar"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/topBar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+        <View android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:background="@color/accent_yellow"/>
+        <View android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:background="@color/accent_blue"/>
+        <View android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:background="@color/accent_red"/>
+    </LinearLayout>
+
+    <!-- ── Scroll: empieza DESPUÉS de identityBar ── -->
     <androidx.core.widget.NestedScrollView
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:paddingBottom="24dp"
-        app:layout_constraintTop_toBottomOf="@id/header"
-        app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/identityBar"
+            app:layout_constraintBottom_toTopOf="@id/bottomNav"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="16dp">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Seleccionar Ruta"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="#191c1d" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:text="ACTIVO AHORA"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="#006c49" />
-            </RelativeLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvRoutes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="32dp"
-                android:clipToPadding="false"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
-            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginBottom="24dp">
+                android:padding="20dp">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/btnConfigRutas"
+            <!-- Saludo -->
+            <TextView
+                    android:id="@+id/tvGreeting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="¡Hola, Conductor!"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_main"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bienvenido al camino de la tranquilidad"
+                    android:textColor="@color/text_variant"
+                    android:textSize="14sp"
+                    android:layout_marginTop="2dp"/>
+
+            <!-- ── Card ruta activa (fondo oscuro) ── -->
+            <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardActiveRoute"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:cardBackgroundColor="#ffffff"
-                    app:cardCornerRadius="16dp"
+                    android:layout_marginTop="20dp"
                     app:cardElevation="0dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#1Ac3c6d1">
+                    app:cardCornerRadius="24dp"
+                    app:cardBackgroundColor="#1A1C22"
+                    app:strokeWidth="0dp">
 
-                    <LinearLayout
+                <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
+                        android:orientation="vertical"
+                        android:padding="20dp">
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            app:cardCornerRadius="12dp"
-                            app:cardElevation="0dp"
-                            app:cardBackgroundColor="#d5e3ff">
-                            <ImageView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:padding="12dp"
-                                android:src="@drawable/ic_edit_location"
-                                app:tint="#001e40"/>
-                        </com.google.android.material.card.MaterialCardView>
+                    <!-- Fila: RUTA ACTIVA + badge EN VIVO -->
+                    <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:layout_marginStart="16dp">
-                            <TextView
+                        <TextView
+                                android:id="@+id/tvRouteStatus"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Gestion de Rutas"
+                                android:text="RUTA ACTIVA"
+                                android:textSize="10sp"
                                 android:textStyle="bold"
-                                android:textSize="16sp"
-                                android:textColor="#191c1d"/>
-                            <TextView
+                                android:textColor="@color/primary_zenda"
+                                android:letterSpacing="0.1"
+                                android:layout_centerVertical="true"/>
+
+                        <TextView
+                                android:id="@+id/badgeLive"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Gestionar trazados y paraderos"
+                                android:text="● EN VIVO"
+                                android:background="@drawable/bg_live_badge"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="4dp"
+                                android:textColor="@color/primary_zenda"
+                                android:textSize="9sp"
+                                android:textStyle="bold"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"/>
+                    </RelativeLayout>
+
+                    <!-- Nombre de ruta -->
+                    <TextView
+                            android:id="@+id/tvRouteName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Expreso Chía-Norte"
+                            android:textSize="22sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginTop="8dp"/>
+
+                    <!-- Progreso -->
+                    <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp">
+
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Progreso de ruta"
                                 android:textSize="12sp"
-                                android:textColor="#737780"/>
-                        </LinearLayout>
+                                android:textColor="#AAAAAA"
+                                android:layout_centerVertical="true"/>
 
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_chevron_right"
-                            app:tint="#737780"/>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                        <TextView
+                                android:id="@+id/tvProgressLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="3/6"
+                                android:layout_alignParentEnd="true"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp"
+                                android:layout_centerVertical="true"/>
+                    </RelativeLayout>
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/btnSoporte"
+                    <ProgressBar
+                            android:id="@+id/routeProgress"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"
+                            android:progress="50"
+                            android:progressDrawable="@drawable/custom_progress_bar"
+                            android:layout_marginTop="8dp"/>
+
+                    <!-- Botón Seguir Ruta -->
+                    <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnFollowRoute"
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:layout_marginTop="20dp"
+                            android:text="Seguir Ruta"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            app:icon="@drawable/ic_navigation"
+                            app:iconGravity="textStart"
+                            app:cornerRadius="100dp"
+                            app:backgroundTint="@color/primary_zenda"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── Cards de estadísticas ── -->
+            <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:cardBackgroundColor="#ffffff"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#1Ac3c6d1">
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                <include
+                        android:id="@+id/statCard1"
+                        layout="@layout/item_stat_card"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"/>
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            app:cardCornerRadius="12dp"
-                            app:cardElevation="0dp"
-                            app:cardBackgroundColor="#d5e3ff">
-                            <ImageView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:padding="12dp"
-                                android:src="@drawable/ic_technical_support"
-                                app:tint="#001e40"/>
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:layout_marginStart="16dp">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Soporte Técnico"
-                                android:textStyle="bold"
-                                android:textSize="16sp"
-                                android:textColor="#191c1d"/>
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Ayuda y reportes de incidencia"
-                                android:textSize="12sp"
-                                android:textColor="#737780"/>
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_chevron_right"
-                            app:tint="#737780"/>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
+                <include
+                        android:id="@+id/statCard2"
+                        layout="@layout/item_stat_card"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"/>
             </LinearLayout>
 
-            <include
-                android:id="@+id/networkStatusCard"
-                layout="@layout/layout_network_status"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp" />
+            <!-- ── Botón Crear Nueva Ruta ── -->
+            <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnNewRoute"
+                    android:layout_width="match_parent"
+                    android:layout_height="72dp"
+                    android:layout_marginTop="16dp"
+                    app:cardElevation="0dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardBackgroundColor="@color/bg_zenda"
+                    app:strokeColor="@color/input_stroke"
+                    app:strokeWidth="1dp">
+
+                <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingHorizontal="16dp">
+
+                    <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_add_road"
+                            app:tint="@color/primary_zenda"
+                            android:layout_centerVertical="true"
+                            android:id="@+id/iconNewRoute"/>
+
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="16dp"
+                            android:layout_toEndOf="@id/iconNewRoute">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Crear Nueva Ruta"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:textColor="@color/text_main"/>
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Inicia un nuevo recorrido"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_variant"/>
+                    </LinearLayout>
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/text_variant"
+                            android:layout_centerVertical="true"
+                            android:layout_alignParentEnd="true"/>
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── Botón Reportar Incidente ── -->
+            <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnReportIncident"
+                    android:layout_width="match_parent"
+                    android:layout_height="72dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="8dp"
+                    app:cardElevation="0dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardBackgroundColor="@color/bg_zenda"
+                    app:strokeColor="@color/input_stroke"
+                    app:strokeWidth="1dp">
+
+                <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingHorizontal="16dp">
+
+                    <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_report"
+                            app:tint="@color/error"
+                            android:layout_centerVertical="true"
+                            android:id="@+id/iconReport"/>
+
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="16dp"
+                            android:layout_toEndOf="@id/iconReport">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Reportar Incidente"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:textColor="@color/text_main"/>
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Vías cerradas o retrasos"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_variant"/>
+                    </LinearLayout>
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/text_variant"
+                            android:layout_centerVertical="true"
+                            android:layout_alignParentEnd="true"/>
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <LinearLayout
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:orientation="horizontal"
-        android:background="@drawable/bg_bottom_nav"
-        android:paddingHorizontal="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:elevation="16dp">
-
-        <LinearLayout
-            android:id="@+id/tabRecorrido"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:clickable="true"
-            android:focusable="true">
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="64dp"
-                android:layout_height="32dp"
-                app:cardBackgroundColor="#1A006c49"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_bus"
-                    app:tint="#006c49" />
-            </com.google.android.material.card.MaterialCardView>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="RECORRIDO"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:textColor="#006c49" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/tabStats"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:clickable="true"
-            android:focusable="true">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_leaderboard"
-                app:tint="#94A3B8" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="ESTADÍSTICAS"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:textColor="#94A3B8" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/tabSettings"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:clickable="true"
-            android:focusable="true">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_settings"
-                app:tint="#94A3B8" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="AJUSTES"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:textColor="#94A3B8" />
-        </LinearLayout>
-
-    </LinearLayout>
+    <!-- ── Bottom Nav: flotante con márgenes ── -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_bottom_nav"
+            app:elevation="8dp"
+            app:itemIconTint="@color/nav_icon_selector"
+            app:itemTextColor="@color/nav_text_selector"
+            app:menu="@menu/bottom_nav_menu"
+            app:labelVisibilityMode="labeled"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

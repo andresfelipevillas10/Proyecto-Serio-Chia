@@ -2,6 +2,7 @@ package com.example.proyecto_definitivo
 
 import android.os.Bundle
 import android.util.Patterns
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -19,38 +20,48 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        val etEmailRecover = findViewById<TextInputEditText>(R.id.emailRecover)
-        val btnRecover = findViewById<MaterialButton>(R.id.btnRecover)
-        val tvVolver = findViewById<TextView>(R.id.tvVolverLogin)
+        // ─── Vinculación con los nuevos IDs del XML ───
+        val etEmailRecover = findViewById<TextInputEditText>(R.id.etEmailRecover)
+        val btnSend = findViewById<MaterialButton>(R.id.btnSendInstructions)
+        val tvVolver = findViewById<TextView>(R.id.tvBackToLogin)
+        val btnBackArrow = findViewById<ImageButton>(R.id.btnBackRecover) // La flechita
 
-        btnRecover.setOnClickListener {
+        // Lógica del botón principal
+        btnSend.setOnClickListener {
             val email = etEmailRecover.text.toString().trim()
             validateAndRecover(email)
         }
 
+        // Volver al login (Texto inferior)
         tvVolver.setOnClickListener {
+            finish()
+        }
+
+        // Volver al login (Flechita superior)
+        btnBackArrow.setOnClickListener {
             finish()
         }
     }
 
     private fun validateAndRecover(email: String) {
         if (email.isEmpty()) {
-            showToast(getString(R.string.error_complete_fields))
+            showToast("Por favor, ingresa tu correo electrónico")
             return
         }
 
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            showToast(getString(R.string.error_invalid_email))
+            showToast("El formato del correo no es válido")
             return
         }
 
+        // Firebase: Envío de correo de recuperación
         auth.sendPasswordResetEmail(email)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    showToast(getString(R.string.instructions_sent))
-                    finish()
+                    showToast("¡Listo! Revisa tu bandeja de entrada")
+                    finish() // Cerramos la pantalla al tener éxito
                 } else {
-                    showToast(getString(R.string.auth_failed, task.exception?.message))
+                    showToast("Error: ${task.exception?.message}")
                 }
             }
     }

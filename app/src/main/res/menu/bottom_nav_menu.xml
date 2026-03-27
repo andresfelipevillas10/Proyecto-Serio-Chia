@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home"
+            android:title="Inicio" />
+    <item
+            android:id="@+id/nav_routes"
+            android:icon="@drawable/ic_routes"
+            android:title="Rutas" />
+    <item
+            android:id="@+id/nav_stats"
+            android:icon="@drawable/ic_leaderboard"
+            android:title="Logros" />
+    <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="Ajustes" />
+</menu>

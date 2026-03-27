@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -29,54 +30,66 @@ class ListaRutas : AppCompatActivity() { // ¡MANTENEMOS TU CLASE INTACTA!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 2. MAGIA AQUÍ: Le decimos a tu clase vieja que use el diseño nuevo
         setContentView(R.layout.activity_configurar_rutas)
 
-        // Enlazamos los IDs del XML nuevo
+        // 1. Enlazamos los IDs del XML
         rvConfigRutas = findViewById(R.id.rvConfigRutas)
         fabAddRoute = findViewById(R.id.fabAddRoute)
         btnBackConfig = findViewById(R.id.btnBackConfig)
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
 
+        // 2. Configuración del Bottom Nav (Conexión Vital)
+        bottomNav.selectedItemId = R.id.nav_routes // Resalta el icono de Rutas
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    // Volver al Dashboard principal
+                    startActivity(Intent(this, HomeRutasActivity::class.java))
+                    overridePendingTransition(0, 0) // Transición instantánea
+                    finish()
+                    true
+                }
+                R.id.nav_routes -> true // Ya estamos aquí
+                else -> true
+            }
+        }
+
+        // 3. Setup del RecyclerView
         rvConfigRutas.layoutManager = LinearLayoutManager(this)
-
-        // Inicializamos el Adapter (con las acciones de editar y eliminar)
-        // Dentro del onCreate de tu ListaRutas.kt:
         rutaAdapter = RutaAdapter(
             listaRutas = listaRutas,
             onEditClick = { rutaSeleccionada ->
-                // Editar: Va al mapa de Configurar Puntos (Paso 2)
                 abrirPantallaConfigurarPuntos(rutaSeleccionada)
             },
             onDeleteClick = { rutaAEliminar ->
                 eliminarRutaFirebase(rutaAEliminar)
             },
             onStartClick = { rutaAIniciar ->
-                // ¡NUEVO! Comenzar: Va a la pantalla Pre-Recorrido
-                val intent = Intent(this, PreRecorridoActivity::class.java)
-                intent.putExtra("rutaId", rutaAIniciar.id)
-                intent.putExtra("rutaNombre", rutaAIniciar.nombre)
-                intent.putExtra("rutaRadio", rutaAIniciar.radioDeteccion)
+                val intent = Intent(this, PreRecorridoActivity::class.java).apply {
+                    putExtra("rutaId", rutaAIniciar.id)
+                    putExtra("rutaNombre", rutaAIniciar.nombre)
+                    putExtra("rutaRadio", rutaAIniciar.radioDeteccion)
+                }
                 startActivity(intent)
             }
         )
-
         rvConfigRutas.adapter = rutaAdapter
 
-        // Los clics de los botones principales
+        // 4. Clics de botones
         btnBackConfig.setOnClickListener {
-            finish() // Cierra esta pantalla y vuelve atrás
+            // En lugar de finish(), mejor volver al Home para asegurar flujo
+            startActivity(Intent(this, HomeRutasActivity::class.java))
+            overridePendingTransition(0, 0)
+            finish()
         }
 
         fabAddRoute.setOnClickListener {
-            // Te lleva a tu clase de creación de rutas
-            val intent = Intent(this, CrearRuta::class.java) // Asegúrate de que apunte a tu clase de Crear Ruta
-            startActivity(intent)
+            // Al crear, se mantiene el contexto de "Inicio"
+            startActivity(Intent(this, CrearRuta::class.java))
         }
 
         cargarRutas()
     }
-
     private fun cargarRutas() {
         val currentUserId = auth.currentUser?.uid ?: return
 

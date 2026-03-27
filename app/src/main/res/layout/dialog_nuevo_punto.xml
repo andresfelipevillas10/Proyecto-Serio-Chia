@@ -5,11 +5,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="#FFFFFF"
-        app:strokeWidth="1dp"
-        app:strokeColor="#1Ac3c6d1">
+        app:cardCornerRadius="32dp"
+        app:cardElevation="12dp"
+        app:cardBackgroundColor="@color/surface_container_lowest"
+        app:strokeWidth="0dp">
 
     <ScrollView
             android:layout_width="match_parent"
@@ -23,74 +22,100 @@
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#001e40"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:paddingTop="32dp"
+                    android:paddingHorizontal="32dp">
 
-                <TextView
+                <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Nuevo Punto"
-                        android:textColor="#FFFFFF"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical">
+
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Agregar Punto"
+                            android:textColor="@color/primary_zenda"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="8dp">
+                        <androidx.cardview.widget.CardView
+                                android:layout_width="16dp" android:layout_height="3dp"
+                                app:cardBackgroundColor="@color/accent_yellow" app:cardCornerRadius="1.5dp" app:cardElevation="0dp"/>
+                        <androidx.cardview.widget.CardView
+                                android:layout_width="16dp" android:layout_height="3dp"
+                                app:cardBackgroundColor="@color/accent_blue" app:cardCornerRadius="1.5dp" app:cardElevation="0dp"/>
+                        <androidx.cardview.widget.CardView
+                                android:layout_width="16dp" android:layout_height="3dp"
+                                app:cardBackgroundColor="@color/accent_red" app:cardCornerRadius="1.5dp" app:cardElevation="0dp"/>
+                    </LinearLayout>
+                </LinearLayout>
 
                 <ImageButton
                         android:id="@+id/btnCerrarDialog"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_close"
-                        app:tint="#B3FFFFFF" />
+                        app:tint="@color/outline_variant" />
             </LinearLayout>
 
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="32dp">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="NOMBRE DEL PUNTO"
+                        android:textColor="@color/text_variant"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.2"
+                        android:layout_marginStart="4dp" />
 
                 <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_card_zenda"
+                        android:backgroundTint="@color/surface_container_low"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="4dp">
 
                     <ImageView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:src="@drawable/ic_edit_note"
-                            app:tint="#4D001e40" />
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_place"
+                            app:tint="@color/primary_zenda" />
 
-                    <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="NOMBRE"
-                            android:textColor="#B3001e40"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
+                    <EditText
+                            android:id="@+id/etNombrePunto"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@null"
+                            android:hint="Ej: Paradero Terminal"
+                            android:inputType="textCapWords"
+                            android:textColor="@color/text_main"
+                            android:textColorHint="@color/outline_variant"
+                            android:textSize="16sp" />
                 </LinearLayout>
-
-                <EditText
-                        android:id="@+id/etNombrePunto"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_input_gray"
-                        android:hint="Ej: Parada Calle 13"
-                        android:inputType="textCapWords"
-                        android:paddingHorizontal="16dp"
-                        android:textColor="#001e40"
-                        android:textColorHint="#999ca1"
-                        android:textSize="14sp" />
 
                 <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="24dp"
                         android:baselineAligned="false"
                         android:orientation="horizontal">
 
@@ -101,40 +126,44 @@
                             android:layout_marginEnd="8dp"
                             android:orientation="vertical">
 
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ORDEN"
+                                android:textColor="@color/text_variant"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="0.2"
+                                android:layout_marginStart="4dp" />
+
                         <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_card_zenda"
+                                android:backgroundTint="@color/surface_container_low"
                                 android:gravity="center_vertical"
-                                android:orientation="horizontal">
+                                android:paddingHorizontal="16dp"
+                                android:paddingVertical="4dp">
 
                             <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
                                     android:src="@drawable/ic_format_list_numbered"
-                                    app:tint="#4D001e40" />
+                                    app:tint="@color/primary_zenda" />
 
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:text="ORDEN"
-                                    android:textColor="#B3001e40"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
+                            <EditText
+                                    android:id="@+id/etOrdenPunto"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="48dp"
+                                    android:layout_marginStart="12dp"
+                                    android:background="@null"
+                                    android:hint="1"
+                                    android:inputType="number"
+                                    android:textColor="@color/text_main"
+                                    android:textColorHint="@color/outline_variant"
+                                    android:textSize="16sp" />
                         </LinearLayout>
-
-                        <EditText
-                                android:id="@+id/etOrdenPunto"
-                                android:layout_width="match_parent"
-                                android:layout_height="48dp"
-                                android:layout_marginTop="6dp"
-                                android:background="@drawable/bg_input_gray"
-                                android:hint="01"
-                                android:inputType="number"
-                                android:paddingHorizontal="16dp"
-                                android:textColor="#001e40"
-                                android:textColorHint="#999ca1"
-                                android:textSize="14sp" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -144,40 +173,30 @@
                             android:layout_marginStart="8dp"
                             android:orientation="vertical">
 
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="TIPO DE PUNTO"
+                                android:textColor="@color/text_variant"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="0.2"
+                                android:layout_marginStart="4dp" />
+
                         <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_card_zenda"
+                                android:backgroundTint="@color/surface_container_low"
                                 android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                            <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:src="@drawable/ic_category"
-                                    app:tint="#4D001e40" />
-
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:text="TIPO"
-                                    android:textColor="#B3001e40"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="48dp"
-                                android:layout_marginTop="6dp"
-                                android:background="@drawable/bg_input_gray"
-                                android:paddingHorizontal="4dp"
-                                android:gravity="center_vertical">
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="4dp">
 
                             <Spinner
                                     android:id="@+id/spTipoPunto"
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
+                                    android:layout_height="48dp"
                                     android:spinnerMode="dropdown" />
                         </LinearLayout>
                     </LinearLayout>
@@ -186,112 +205,135 @@
                 <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:background="@drawable/bg_input_gray"
-                        android:orientation="vertical"
-                        android:padding="12dp">
+                        android:layout_marginTop="24dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
 
                     <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                        <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:src="@drawable/ic_location_on"
-                                app:tint="#4D001e40" />
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:orientation="vertical">
 
                         <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginStart="8dp"
-                                android:text="GEOLOCALIZACIÓN"
-                                android:textColor="#B3001e40"
-                                android:textSize="10sp"
-                                android:textStyle="bold" />
-
-                        <LinearLayout
-                                android:id="@+id/btnActualizarUbicacion"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:text="LATITUD"
+                                android:textColor="@color/text_variant"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="0.2"
+                                android:layout_marginStart="4dp" />
+
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_card_zenda"
+                                android:backgroundTint="#80F3F4F3"
                                 android:gravity="center_vertical"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true">
+                                android:paddingHorizontal="16dp"
+                                android:paddingVertical="4dp">
 
                             <ImageView
-                                    android:layout_width="14dp"
-                                    android:layout_height="14dp"
-                                    android:src="@drawable/ic_my_location"
-                                    app:tint="#006c49" />
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_explore"
+                                    app:tint="@color/outline_variant" />
 
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
-                                    android:text="ACTUALIZAR"
-                                    android:textColor="#006c49"
-                                    android:textSize="10sp"
+                            <EditText
+                                    android:id="@+id/etLatitudPunto"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="40dp"
+                                    android:layout_marginStart="8dp"
+                                    android:background="@null"
+                                    android:hint="0.0000"
+                                    android:enabled="false"
+                                    android:textColor="@color/text_variant"
+                                    android:textSize="14sp"
                                     android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 
                     <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:baselineAligned="false"
-                            android:orientation="horizontal">
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:orientation="vertical">
 
-                        <EditText
-                                android:id="@+id/etLatitudPunto"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_weight="1"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_white_rounded_small"
-                                android:hint="Latitud"
-                                android:inputType="numberDecimal|numberSigned"
-                                android:paddingHorizontal="12dp"
-                                android:textColor="#001e40"
-                                android:textSize="12sp"
-                                android:fontFamily="monospace" />
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="LONGITUD"
+                                android:textColor="@color/text_variant"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="0.2"
+                                android:layout_marginStart="4dp" />
 
-                        <EditText
-                                android:id="@+id/etLongitudPunto"
-                                android:layout_width="0dp"
-                                android:layout_height="40dp"
-                                android:layout_weight="1"
-                                android:layout_marginStart="6dp"
-                                android:background="@drawable/bg_white_rounded_small"
-                                android:hint="Longitud"
-                                android:inputType="numberDecimal|numberSigned"
-                                android:paddingHorizontal="12dp"
-                                android:textColor="#001e40"
-                                android:textSize="12sp"
-                                android:fontFamily="monospace" />
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_card_zenda"
+                                android:backgroundTint="#80F3F4F3"
+                                android:gravity="center_vertical"
+                                android:paddingHorizontal="16dp"
+                                android:paddingVertical="4dp">
+
+                            <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_explore"
+                                    app:tint="@color/outline_variant" />
+
+                            <EditText
+                                    android:id="@+id/etLongitudPunto"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="40dp"
+                                    android:layout_marginStart="8dp"
+                                    android:background="@null"
+                                    android:hint="0.0000"
+                                    android:enabled="false"
+                                    android:textColor="@color/text_variant"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
+
+                <LinearLayout
+                        android:id="@+id/btnActualizarUbicacion"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:visibility="gone"
+                        android:orientation="horizontal"
+                        />
+
+            </LinearLayout>
+
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="32dp"
+                    android:paddingBottom="32dp">
 
                 <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnGuardarPunto"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="24dp"
-                        android:text="GUARDAR PUNTO"
-                        android:textColor="#ffffff"
-                        android:textSize="14sp"
+                        android:layout_height="64dp"
+                        android:text="Guardar Punto"
+                        android:textAllCaps="false"
+                        android:textSize="16sp"
                         android:textStyle="bold"
-                        app:backgroundTint="#006c49"
-                        app:cornerRadius="12dp"
-                        app:icon="@drawable/ic_save"
-                        app:iconGravity="textStart"
-                        app:iconTint="#ffffff" />
-
+                        app:backgroundTint="@color/primary_zenda"
+                        app:cornerRadius="100dp"
+                        app:icon="@drawable/ic_check_circle"
+                        app:iconGravity="textStart" />
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 </com.google.android.material.card.MaterialCardView>

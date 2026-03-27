@@ -49,5 +49,19 @@
     <color name="gradient_start">#1A6B3A</color>
     <color name="gradient_end">#2E9B58</color>
     <color name="input_stroke_Selector">#E1E3E2</color>
+
+    <color name="live_bg">#C6F6D5</color>
+    <color name="live_text">#22543D</color>
+    <color name="stats_bg">#F3F4F3</color>
+    <color name="primary">#006a37</color>
+
+    <color name="error">#ba1a1a</color>
+
+    <color name="surface_container_high">#e7e8e7</color>
+    <color name="surface_container_low">#F3F4F3</color>
+    <color name="surface_container_highest">#e1e3e2</color>
+    <color name="surface_container_lowest">#FFFFFF</color>
+
+
 </resources>
 

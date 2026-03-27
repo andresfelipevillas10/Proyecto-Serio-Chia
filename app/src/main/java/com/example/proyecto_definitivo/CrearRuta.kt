@@ -2,46 +2,75 @@ package com.example.proyecto_definitivo
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.EditText
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.ImageButton
+import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 class CrearRuta : AppCompatActivity() {
 
     // 1. Apuntamos a los IDs del nuevo diseño XML
-    private lateinit var etNombreRuta: EditText
-    private lateinit var etDescripcionRuta: EditText
-    private lateinit var etRadioDeteccion: EditText
-    private lateinit var btnSiguientePuntos: MaterialButton
-    private lateinit var btnBackCrear: ImageButton
-    private lateinit var progressRoute: LinearProgressIndicator // La barrita de progreso visual
+    private lateinit var etNombreRuta: TextInputEditText
+    private lateinit var etDescripcionRuta: TextInputEditText
+    private lateinit var sbRadio: SeekBar
+    private lateinit var tvRadioValor: TextView
+    private lateinit var atvTurno: AutoCompleteTextView
+    private lateinit var btnSiguiente: MaterialButton
+    private lateinit var btnBack: ImageButton
+    private lateinit var bottomNav: BottomNavigationView
 
     private val db = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // MAGIA: Le decimos que use el XML del Paso 1 (ajusta el nombre si lo guardaste diferente)
         setContentView(R.layout.activity_crear_ruta_paso1)
 
-        // 2. Enlazamos la vista
-        etNombreRuta = findViewById(R.id.etRouteName)
-        etDescripcionRuta = findViewById(R.id.etShortDescription)
-        etRadioDeteccion = findViewById(R.id.etDetectionRadius)
-        btnSiguientePuntos = findViewById(R.id.btnNextStepMap)
-        btnBackCrear = findViewById(R.id.btnBackCrear)
-        progressRoute = findViewById(R.id.progressRoute)
+        // 2. Enlazamos la vista con los nuevos IDs
+        etNombreRuta = findViewById(R.id.etNombreRuta)
+        etDescripcionRuta = findViewById(R.id.etDescRuta)
+        sbRadio = findViewById(R.id.sbRadio)
+        tvRadioValor = findViewById(R.id.tvRadioValor)
+        atvTurno = findViewById(R.id.atvTurno)
+        btnSiguiente = findViewById(R.id.btnSiguiente)
+        btnBack = findViewById(R.id.btnBack)
+        bottomNav = findViewById(R.id.bottomNav)
 
-        // El botón de atrás simplemente cierra esta ventana
-        btnBackCrear.setOnClickListener { finish() }
+        // Configurar botón de atrás
+        btnBack.setOnClickListener { finish() }
 
-        // El botón Siguiente (que ahora hace de "Guardar")
-        btnSiguientePuntos.setOnClickListener {
+        // Configurar el Slider (SeekBar) del radio de detección
+        sbRadio.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                // Forzamos a que el mínimo sea 10m
+                val valorReal = if (progress < 10) 10 else progress
+                tvRadioValor.text = "${valorReal}m"
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        // Configurar el Dropdown de Horarios
+        val opciones = arrayOf("Mañana 06:00 - 14:00", "Tarde 14:00 - 22:00", "Noche 22:00 - 06:00", "Personalizado")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
+        atvTurno.setAdapter(adapter)
+
+        // En el onCreate de CrearRuta.kt
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
+
+// CAMBIO: Ahora resaltamos Home aunque estemos creando la ruta
+        bottomNav.selectedItemId = R.id.nav_home
+
+        // El botón Siguiente (Guarda en Firebase y pasa al mapa)
+        btnSiguiente.setOnClickListener {
             guardarRuta()
         }
     }
@@ -49,9 +78,12 @@ class CrearRuta : AppCompatActivity() {
     private fun guardarRuta() {
         val nombre = etNombreRuta.text.toString().trim()
         val descripcion = etDescripcionRuta.text.toString().trim()
-        val radioTexto = etRadioDeteccion.text.toString().trim()
 
-        // Validaciones intactas de tu código original
+        // El radio ahora lo sacamos del SeekBar de forma 100% segura
+        val radioProgreso = sbRadio.progress
+        val radio = if (radioProgreso < 10) 10f else radioProgreso.toFloat()
+
+        // Validaciones visuales
         if (nombre.isEmpty()) {
             etNombreRuta.error = "Ingrese el nombre de la ruta"
             etNombreRuta.requestFocus()
@@ -64,29 +96,16 @@ class CrearRuta : AppCompatActivity() {
             return
         }
 
-        if (radioTexto.isEmpty()) {
-            etRadioDeteccion.error = "Ingrese el radio de detección"
-            etRadioDeteccion.requestFocus()
-            return
-        }
-
-        val radio = radioTexto.toFloatOrNull()
-        if (radio == null || radio <= 0f) {
-            etRadioDeteccion.error = "Ingrese un valor válido"
-            etRadioDeteccion.requestFocus()
-            return
-        }
-
-        // Bloqueamos el botón y animamos la barra de progreso mientras Firebase trabaja
         val currentUserId = auth.currentUser?.uid ?: return
 
-        // Bloqueamos el botón y animamos la barra de progreso mientras Firebase trabaja
-        btnSiguientePuntos.isEnabled = false
-        progressRoute.isIndeterminate = true
+        // Bloqueamos el botón y damos feedback visual mientras Firebase trabaja
+        btnSiguiente.isEnabled = false
+        btnSiguiente.text = "Guardando..."
 
         val rutaRef = db.child("rutas").child(currentUserId).push()
         val rutaId = rutaRef.key ?: ""
 
+        // Tu data class original de Ruta
         val ruta = Ruta(
             id = rutaId,
             userId = currentUserId,
@@ -99,23 +118,21 @@ class CrearRuta : AppCompatActivity() {
 
         rutaRef.setValue(ruta)
             .addOnSuccessListener {
-                progressRoute.isIndeterminate = false
-                progressRoute.progress = 100 // Llenamos la barra al 100%
-                Toast.makeText(this, getString(R.string.route_created_next_step), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Etapa 1 lista. Configura el mapa.", Toast.LENGTH_SHORT).show()
 
-                // EL CAMBIO MAESTRO: Saltamos directo al Paso 2 enviando los datos recién creados
+                // EL CAMBIO MAESTRO: Saltamos directo al Paso 2
                 val intent = Intent(this, ConfigurarPuntosRuta::class.java)
                 intent.putExtra("rutaId", rutaId)
                 intent.putExtra("rutaNombre", nombre)
                 intent.putExtra("rutaRadio", radio)
                 startActivity(intent)
 
-                // Cerramos esta pantalla para que si el usuario da "Atrás" en el mapa, vuelva al menú, no aquí.
+                // Cerramos esta pantalla para no dañar la pila de navegación
                 finish()
             }
             .addOnFailureListener { e ->
-                progressRoute.isIndeterminate = false
-                btnSiguientePuntos.isEnabled = true
+                btnSiguiente.isEnabled = true
+                btnSiguiente.text = "Siguiente Paso"
                 Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }

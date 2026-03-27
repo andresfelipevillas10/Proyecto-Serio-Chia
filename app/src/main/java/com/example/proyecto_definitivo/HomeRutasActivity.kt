@@ -1,110 +1,157 @@
 package com.example.proyecto_definitivo // Tu paquete
 
+
+
 import android.content.Intent
 import android.os.Bundle
-import android.widget.LinearLayout
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 
 class HomeRutasActivity : AppCompatActivity() {
 
-    private lateinit var btnConfigRutas: MaterialCardView
-    private lateinit var btnSoporte: MaterialCardView
-    private lateinit var rvRoutes: RecyclerView
+    private lateinit var auth: FirebaseAuth
+    private lateinit var dbRef: DatabaseReference
 
-    private lateinit var tabRecorrido: LinearLayout
-    private lateinit var tabStats: LinearLayout
-    private lateinit var tabSettings: LinearLayout
+    // Vistas del Dashboard
+    private lateinit var tvGreeting: TextView
+    private lateinit var tvRouteName: TextView
+    private lateinit var tvProgressLabel: TextView
+    private lateinit var routeProgress: ProgressBar
+    private lateinit var cardActiveRoute: MaterialCardView
+    private lateinit var btnFollowRoute: MaterialButton
 
-    // 🔥 Variables para la Base de Datos y el Adaptador
-    private val db = FirebaseDatabase.getInstance().reference
-    private val listaRutasAccesoRapido = mutableListOf<Ruta>()
-    private lateinit var adapterRutas: RutaRecorridoAdapter
+    // 🚨 EL CAMBIO CLAVE: Ahora Kotlin sabe que son MaterialCardView
+    private lateinit var btnNewRoute: MaterialCardView
+    private lateinit var btnReportIncident: MaterialCardView
+
+    private lateinit var bottomNav: BottomNavigationView
+    private lateinit var badgeLive: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home_rutas)
+        setContentView(R.layout.activity_home_rutas) // Tu XML perfecto
 
-        btnConfigRutas = findViewById(R.id.btnConfigRutas)
-        btnSoporte = findViewById(R.id.btnSoporte)
-        rvRoutes = findViewById(R.id.rvRoutes)
+        auth = FirebaseAuth.getInstance()
+        val userId = auth.currentUser?.uid ?: ""
+        dbRef = FirebaseDatabase.getInstance().getReference("users").child(userId)
 
-        tabRecorrido = findViewById(R.id.tabRecorrido)
-        tabStats = findViewById(R.id.tabStats)
-        tabSettings = findViewById(R.id.tabSettings)
-
-        // 1. Configurar la lista de Acceso Rápido
-        configurarRecyclerView()
-
-        // 2. Configurar los botones estáticos
-        setupClickListeners()
-
-        // 3. Descargar las rutas para mostrarlas en el Home
-        cargarRutasDeAccesoRapido()
+        initViews()
+        loadUserData()
+        setupBottomNav()
     }
 
-    private fun configurarRecyclerView() {
-        rvRoutes.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false) // Formato Carrusel (Horizontal)
+    private fun initViews() {
+        tvGreeting = findViewById(R.id.tvGreeting)
+        tvRouteName = findViewById(R.id.tvRouteName)
+        tvProgressLabel = findViewById(R.id.tvProgressLabel)
+        routeProgress = findViewById(R.id.routeProgress)
+        cardActiveRoute = findViewById(R.id.cardActiveRoute)
+        btnFollowRoute = findViewById(R.id.btnFollowRoute)
 
-        adapterRutas = RutaRecorridoAdapter(listaRutasAccesoRapido) { rutaSeleccionada ->
-            // Cuando el conductor toca el botón "INICIAR" en la tarjeta del Home:
-            val intent = Intent(this, PreRecorridoActivity::class.java)
-            intent.putExtra("rutaId", rutaSeleccionada.id)
-            intent.putExtra("rutaNombre", rutaSeleccionada.nombre)
-            intent.putExtra("rutaRadio", rutaSeleccionada.radioDeteccion)
-            startActivity(intent)
+        // 🚨 Inicializamos las tarjetas interactivas
+        btnNewRoute = findViewById(R.id.btnNewRoute)
+        btnReportIncident = findViewById(R.id.btnReportIncident)
+
+        bottomNav = findViewById(R.id.bottomNav)
+        badgeLive = findViewById(R.id.badgeLive)
+
+        // Los CardViews tienen OnClickListener igual que los botones
+        btnFollowRoute.setOnClickListener {
+            showToast("Iniciando navegación GPS...")
+            // Aquí irá el Intent a tu mapa
         }
-        rvRoutes.adapter = adapterRutas
+
+        btnNewRoute.setOnClickListener {
+            startActivity(Intent(this, CrearRuta::class.java))
+        }
+
+        btnReportIncident.setOnClickListener {
+            showToast("Reporte de incidente abierto")
+        }
     }
 
-    private fun cargarRutasDeAccesoRapido() {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-        if (currentUserId.isEmpty()) return
+    private fun loadUserData() {
+        dbRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // 1. Saludo personalizado
+                    val nombre = snapshot.child("nombre").value.toString()
+                    tvGreeting.text = "¡Hola, $nombre!"
 
-        // Consultamos la base de datos para traer las rutas disponibles
-        db.child("rutas").child(currentUserId).limitToFirst(5).get().addOnSuccessListener { snapshot ->
-            listaRutasAccesoRapido.clear()
-
-            for (rutaSnap in snapshot.children) {
-                val ruta = rutaSnap.getValue(Ruta::class.java)
-                if (ruta != null) {
-                    listaRutasAccesoRapido.add(ruta)
+                    // 2. Lógica de Ruta Activa
+                    val rutaActiva = snapshot.child("ruta_actual").exists()
+                    updateRouteUI(rutaActiva, snapshot)
                 }
             }
-            // Refrescamos la lista para que aparezcan las tarjetas
-            adapterRutas.notifyDataSetChanged()
 
-        }.addOnFailureListener {
-            Toast.makeText(this, "Error al cargar las rutas recientes", Toast.LENGTH_SHORT).show()
+            override fun onCancelled(error: DatabaseError) {
+                showToast("Error al conectar con la base de datos")
+            }
+        })
+    }
+
+    private fun updateRouteUI(isActive: Boolean, snapshot: DataSnapshot) {
+        if (isActive) {
+            val nombreRuta = snapshot.child("ruta_actual/nombre").value.toString()
+            val progreso = snapshot.child("ruta_actual/puntos_completados").value.toString()
+            val total = snapshot.child("ruta_actual/total_puntos").value.toString()
+
+            tvRouteName.text = nombreRuta
+            tvProgressLabel.text = "$progreso/$total"
+
+            // Calcular porcentaje para la ProgressBar
+            val p = progreso.toIntOrNull() ?: 0
+            val t = total.toIntOrNull() ?: 1
+            routeProgress.progress = (p * 100) / t
+
+            badgeLive.visibility = View.VISIBLE
+            btnFollowRoute.text = "Seguir Ruta"
+        } else {
+            // "MODO ZENDA": Motores apagados
+            tvRouteName.text = "Motores apagados. El camino te espera, conductor."
+            tvProgressLabel.text = "0/0"
+            routeProgress.progress = 0
+            badgeLive.visibility = View.GONE
+            btnFollowRoute.text = "Iniciar Jornada"
         }
     }
 
-    private fun setupClickListeners() {
-        btnConfigRutas.setOnClickListener {
-            // Abrimos el panel de administración
-            val intent = Intent(this, ListaRutas::class.java)
-            startActivity(intent)
-        }
+    private fun setupBottomNav() {
+        // 1. Forzamos que al abrir el Dashboard, el ícono resaltado sea Home
+        bottomNav.selectedItemId = R.id.nav_home
 
-        btnSoporte.setOnClickListener {
-            showToast("Abriendo soporte...")
-        }
-
-        tabRecorrido.setOnClickListener {
-            showToast("Ya estás en la pantalla principal")
-        }
-
-        tabStats.setOnClickListener {
-            showToast("Estadísticas en desarrollo...")
-        }
-
-        tabSettings.setOnClickListener {
-            showToast("Abriendo perfil...")
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    // Ya estás en Home, no hacemos nada o refrescamos
+                    true
+                }
+                R.id.nav_routes -> {
+                    // 2. Ir a la pantalla de gestión de rutas (ListaRutas)
+                    val intent = Intent(this, ListaRutas::class.java)
+                    startActivity(intent)
+                    // Quitamos la animación para que parezca una sola app fluida
+                    overridePendingTransition(0, 0)
+                    true
+                }
+                R.id.nav_stats -> {
+                    showToast("Estadísticas en desarrollo...")
+                    true
+                }
+                R.id.nav_settings -> {
+                    showToast("Abriendo Perfil...")
+                    true
+                }
+                else -> false
+            }
         }
     }
 
