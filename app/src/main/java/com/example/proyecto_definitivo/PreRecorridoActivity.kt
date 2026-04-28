@@ -18,7 +18,11 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.MutableData
+import com.google.firebase.database.Transaction
 
 class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -93,18 +97,39 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
             // 3. Lo guardamos en Firebase y SI ES EXITOSO, abramos la Navegación
             recorridosRef.setValue(recorridoDeHoy).addOnSuccessListener {
 
+                // ACTUALIZACIÓN DE HUB: Guardamos la ruta activa en el perfil del usuario
+                val userRef = db.child("users").child(conductorId).child("ruta_actual")
+                val rutaInfo = mapOf(
+                    "id" to rutaId,
+                    "nombre" to rutaNombre,
+                    "puntos_completados" to 0,
+                    "total_puntos" to listaPuntos.size,
+                    "recorridoId" to nuevoRecorridoId,
+                    "radioDeteccion" to rutaRadio
+                )
+                userRef.setValue(rutaInfo)
+
+                // ESTADÍSTICA: Incrementamos el contador de uso de esta ruta
+                db.child("rutas").child(conductorId).child(rutaId).child("usoCount")
+                    .runTransaction(object : Transaction.Handler {
+                        override fun doTransaction(mutableData: MutableData): Transaction.Result {
+                            val currentCount = mutableData.getValue(Int::class.java) ?: 0
+                            mutableData.value = currentCount + 1
+                            return Transaction.success(mutableData)
+                        }
+                        override fun onComplete(databaseError: DatabaseError?, committed: Boolean, dataSnapshot: DataSnapshot?) {}
+                    })
+
                 Toast.makeText(this, "¡Recorrido Iniciado!", Toast.LENGTH_SHORT).show()
 
                 val intent = Intent(this, NavegacionActivaActivity::class.java)
                 intent.putExtra("rutaId", rutaId)
                 intent.putExtra("rutaNombre", rutaNombre)
                 intent.putExtra("rutaRadio", rutaRadio)
-                // ¡SÚPER IMPORTANTE! Le pasamos el ID del recorrido a la Navegación Activa
-                // para que sepa a quién debe ponerle "finalizado" cuando terminen.
                 intent.putExtra("recorridoId", nuevoRecorridoId)
 
                 startActivity(intent)
-                finish() // Cerramos esta pantalla para que no pueda volver atrás con el botón del celular
+                finish()
 
             }.addOnFailureListener {
                 Toast.makeText(this, "Error de red al iniciar", Toast.LENGTH_SHORT).show()

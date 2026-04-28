@@ -100,16 +100,6 @@
                     android:textStyle="bold" />
         </LinearLayout>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnMyLocation"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="16dp"
-                android:src="@drawable/ic_navigation"
-                app:backgroundTint="#FFFFFF"
-                app:tint="@color/primary_zenda"
-                app:fabSize="mini" />
     </com.google.android.material.card.MaterialCardView>
 
     <androidx.constraintlayout.widget.ConstraintLayout

@@ -39,6 +39,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var tvActiveTime: TextView
     private lateinit var tvActiveSpeed: TextView
     private lateinit var btnEndRoute: MaterialButton
+    private lateinit var btnSafetyExit: MaterialButton
     private lateinit var fabReportarNovedad: FloatingActionButton
 
     // Variables de Ruta
@@ -67,6 +68,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         tvActiveTime = findViewById(R.id.tvActiveTime)
         tvActiveSpeed = findViewById(R.id.tvActiveSpeed)
         btnEndRoute = findViewById(R.id.btnEndRoute)
+        btnSafetyExit = findViewById(R.id.btnSafetyExit)
         fabReportarNovedad = findViewById(R.id.fabReportarNovedad)
 
         // 2. Recibir Datos
@@ -81,6 +83,10 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         // 4. Configurar Botones
         btnEndRoute.setOnClickListener {
             solicitarClaveFinalizacion()
+        }
+
+        btnSafetyExit.setOnClickListener {
+            mostrarAlertaSeguridad()
         }
 
         fabReportarNovedad.setOnClickListener {
@@ -317,6 +323,30 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    private fun mostrarAlertaSeguridad() {
+        AlertDialog.Builder(this)
+            .setTitle("¡ATENCIÓN! SEGURIDAD PRIMERO")
+            .setMessage("¿Desea salir al Hub principal?\n\nLa ruta seguirá activa y podrá retomarla más tarde.\n\nRecuerde mantener las MANOS AL VOLANTE y solo manipular el teléfono cuando el vehículo esté detenido.")
+            .setPositiveButton("SÍ, SALIR AL HUB") { _, _ ->
+                // Al salir por seguridad, NO cancelamos la ruta. Solo volvemos al Hub.
+                salirSeguridad()
+            }
+            .setNegativeButton("VOLVER A LA RUTA", null)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .show()
+    }
+
+    private fun salirSeguridad() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+        
+        // NO eliminamos ruta_actual de Firebase. 
+        // NO cambiamos el estado del recorrido.
+        // De esta forma, el Hub seguirá mostrando "Seguir Ruta".
+
+        Toast.makeText(this, "Navegación minimizada por seguridad", Toast.LENGTH_SHORT).show()
+        finish()
     }
 
     private fun finalizarRecorrido(esAutomatico: Boolean) {

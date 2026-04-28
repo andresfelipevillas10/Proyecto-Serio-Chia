@@ -1,10 +1,10 @@
 package com.example.proyecto_definitivo
 
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -14,6 +14,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import java.util.Calendar
 
 class CrearRuta : AppCompatActivity() {
 
@@ -21,7 +22,10 @@ class CrearRuta : AppCompatActivity() {
     private lateinit var etDescripcionRuta: TextInputEditText
     private lateinit var sbRadio: SeekBar
     private lateinit var tvRadioValor: TextView
-    private lateinit var atvTurno: AutoCompleteTextView
+    private lateinit var etHoraSalida: TextInputEditText
+    private lateinit var etHoraLlegada: TextInputEditText
+    private lateinit var tvGuiaDescripcion: TextView
+    private lateinit var ivGuiaIcon: ImageView
     private lateinit var btnSiguiente: MaterialButton
     private lateinit var btnBack: ImageButton
     private lateinit var bottomNav: BottomNavigationView
@@ -43,14 +47,13 @@ class CrearRuta : AppCompatActivity() {
         etDescripcionRuta = findViewById(R.id.etDescRuta)
         sbRadio = findViewById(R.id.sbRadio)
         tvRadioValor = findViewById(R.id.tvRadioValor)
-        atvTurno = findViewById(R.id.atvTurno)
+        etHoraSalida = findViewById(R.id.etHoraSalida)
+        etHoraLlegada = findViewById(R.id.etHoraLlegada)
+        tvGuiaDescripcion = findViewById(R.id.tvGuiaDescripcion)
+        ivGuiaIcon = findViewById(R.id.ivGuiaIcon)
         btnSiguiente = findViewById(R.id.btnSiguiente)
         btnBack = findViewById(R.id.btnBack)
         bottomNav = findViewById(R.id.bottomNav)
-
-        val opciones = arrayOf("Mañana 06:00 - 14:00", "Tarde 14:00 - 22:00", "Noche 22:00 - 06:00", "Personalizado")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
-        atvTurno.setAdapter(adapter)
     }
 
     private fun setupBottomNav() {
@@ -87,10 +90,27 @@ class CrearRuta : AppCompatActivity() {
     private fun setupListeners() {
         btnBack.setOnClickListener { finish() }
 
+        setupTimePickers()
+
         sbRadio.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val valorReal = if (progress < 10) 10 else progress
                 tvRadioValor.text = "${valorReal}m"
+
+                when {
+                    valorReal < 20 -> {
+                        tvGuiaDescripcion.text = "ESTRICTO: Ideal para zonas de pruebas o paraderos muy exactos."
+                        ivGuiaIcon.setImageResource(R.drawable.ic_radar)
+                    }
+                    valorReal in 20..50 -> {
+                        tvGuiaDescripcion.text = "RECOMENDADO: Ideal para paraderos estándar y calles urbanas."
+                        ivGuiaIcon.setImageResource(R.drawable.ic_check_circle)
+                    }
+                    else -> {
+                        tvGuiaDescripcion.text = "AMPLIO: Útil en avenidas grandes o zonas con mala señal GPS."
+                        ivGuiaIcon.setImageResource(R.drawable.ic_warning)
+                    }
+                }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -101,9 +121,32 @@ class CrearRuta : AppCompatActivity() {
         }
     }
 
+    private fun setupTimePickers() {
+        etHoraSalida.setOnClickListener {
+            mostrarTimePicker(etHoraSalida)
+        }
+        etHoraLlegada.setOnClickListener {
+            mostrarTimePicker(etHoraLlegada)
+        }
+    }
+
+    private fun mostrarTimePicker(editText: TextInputEditText) {
+        val c = Calendar.getInstance()
+        val hour = c.get(Calendar.HOUR_OF_DAY)
+        val minute = c.get(Calendar.MINUTE)
+
+        val timePickerDialog = TimePickerDialog(this, { _, selectedHour, selectedMinute ->
+            val formattedTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+            editText.setText(formattedTime)
+        }, hour, minute, true)
+        timePickerDialog.show()
+    }
+
     private fun guardarRuta() {
         val nombre = etNombreRuta.text.toString().trim()
         val descripcion = etDescripcionRuta.text.toString().trim()
+        val horaSalida = etHoraSalida.text.toString().trim()
+        val horaLlegada = etHoraLlegada.text.toString().trim()
 
         // El radio ahora lo sacamos del SeekBar de forma 100% segura
         val radioProgreso = sbRadio.progress
@@ -119,6 +162,18 @@ class CrearRuta : AppCompatActivity() {
         if (descripcion.isEmpty()) {
             etDescripcionRuta.error = "Ingrese la descripción"
             etDescripcionRuta.requestFocus()
+            return
+        }
+
+        if (horaSalida.isEmpty()) {
+            etHoraSalida.error = "Seleccione la hora de salida"
+            etHoraSalida.requestFocus()
+            return
+        }
+
+        if (horaLlegada.isEmpty()) {
+            etHoraLlegada.error = "Seleccione la hora de llegada"
+            etHoraLlegada.requestFocus()
             return
         }
 
@@ -139,7 +194,9 @@ class CrearRuta : AppCompatActivity() {
             descripcion = descripcion,
             activa = true,
             radioDeteccion = radio,
-            creadaEn = System.currentTimeMillis()
+            creadaEn = System.currentTimeMillis(),
+            horaSalida = horaSalida,
+            horaLlegada = horaLlegada
         )
 
         rutaRef.setValue(ruta)

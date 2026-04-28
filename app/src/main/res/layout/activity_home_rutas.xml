@@ -104,6 +104,21 @@
                     android:textSize="14sp"
                     android:layout_marginTop="2dp"/>
 
+            <!-- Mensaje de estado vacío (Oculto por defecto) -->
+            <TextView
+                    android:id="@+id/tvEmptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:padding="32dp"
+                    android:text="¡Oye! No tienes nada para el camino.\nCrea una ruta para empezar."
+                    android:textAlignment="center"
+                    android:textColor="@color/text_variant"
+                    android:textSize="16sp"
+                    android:textStyle="italic"
+                    android:background="@drawable/bg_info_box"
+                    android:visibility="gone" />
+
             <!-- ── Card ruta activa (fondo oscuro) ── -->
             <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardActiveRoute"
@@ -213,6 +228,38 @@
                             app:backgroundTint="@color/primary_zenda"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── Sección: Rutas Frecuentes (Oculto si no hay) ── -->
+            <LinearLayout
+                    android:id="@+id/layoutFrecuentes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="RUTAS MÁS USADAS"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_variant"
+                        android:letterSpacing="0.1"
+                        android:layout_marginBottom="8dp"/>
+
+                <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none">
+                    <LinearLayout
+                            android:id="@+id/containerFrecuentes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingBottom="8dp"/>
+                </HorizontalScrollView>
+            </LinearLayout>
 
             <!-- ── Cards de estadísticas ── -->
             <LinearLayout
