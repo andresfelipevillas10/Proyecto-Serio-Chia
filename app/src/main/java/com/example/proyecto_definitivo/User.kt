@@ -8,5 +8,6 @@ data class User(
     val direccion: String? = null,
     val email: String? = null,
     val noBus: String? = null,
-    val turno: String? = null
+    val turno: String? = null,
+    val rol:String?=null
 )

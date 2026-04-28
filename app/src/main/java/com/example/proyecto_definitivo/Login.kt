@@ -1,5 +1,6 @@
 package com.example.proyecto_definitivo
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
@@ -12,7 +13,9 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 
 class Login : AppCompatActivity() {
-    private lateinit var auth: FirebaseAuth
+    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    // Referencias de UI
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnIngresar: MaterialButton
@@ -22,8 +25,6 @@ class Login : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
-        auth = FirebaseAuth.getInstance()
 
         initViews()
         setupListeners()
@@ -36,19 +37,22 @@ class Login : AppCompatActivity() {
         tvRegister = findViewById(R.id.tvRegister)
         tvOlvidoPass = findViewById(R.id.tvOlvidoPassword)
 
-        val textoRegistro = getString(R.string.new_user)
-        tvRegister.text = HtmlCompat.fromHtml(textoRegistro, HtmlCompat.FROM_HTML_MODE_LEGACY)
+        tvRegister.text = HtmlCompat.fromHtml(
+            getString(R.string.new_user),
+            HtmlCompat.FROM_HTML_MODE_LEGACY
+        )
     }
 
     private fun setupListeners() {
         btnIngresar.setOnClickListener { validateAndLogin() }
 
+        // REDIRECCIÓN OPTIMIZADA: Hacia SelectionActivity (Rol Selection)
         tvRegister.setOnClickListener {
-            startActivity(Intent(this, Register::class.java))
+            navigateTo(SelectionActivity::class.java)
         }
 
         tvOlvidoPass.setOnClickListener {
-            startActivity(Intent(this, ForgotPasswordActivity::class.java))
+            navigateTo(ForgotPasswordActivity::class.java)
         }
     }
 
@@ -56,33 +60,31 @@ class Login : AppCompatActivity() {
         val email = etEmail.text.toString().trim()
         val pass = etPassword.text.toString().trim()
 
-        if (email.isEmpty() || pass.isEmpty()) {
-            showToast("Por favor, completa todos los campos")
-            return
+        when {
+            email.isEmpty() || pass.isEmpty() -> toast("Por favor, completa todos los campos")
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> toast("El formato del correo no es válido")
+            else -> login(email, pass)
         }
-
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            showToast("El formato del correo no es válido")
-            return
-        }
-
-        login(email, pass)
     }
 
     private fun login(email: String, pass: String) {
         auth.signInWithEmailAndPassword(email, pass)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, HomeRutasActivity::class.java))
-                    finish()
+                    navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
                 } else {
-                    // Muestra el error real de Firebase para debuguear rápido
-                    showToast("Error: ${task.exception?.message}")
+                    toast("Error: ${task.exception?.message}")
                 }
             }
     }
 
-    private fun showToast(message: String) {
+    // Funciones de utilidad idiomáticas
+    private fun <T> navigateTo(clazz: Class<T>, finishCurrent: Boolean = false) {
+        startActivity(Intent(this, clazz))
+        if (finishCurrent) finish()
+    }
+
+    private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

@@ -24,9 +24,13 @@
                 android:exported="false" />
         <activity
                 android:name=".ForgotPasswordActivity"
+                android:windowSoftInputMode="adjustResize"
                 android:exported="false" />
         <activity
                 android:name=".HomeRutasActivity"
+                android:exported="false" />
+        <activity
+                android:name=".InfoBusesActivity"
                 android:exported="false" />
         <activity
                 android:name=".ListaRutas"
@@ -38,6 +42,9 @@
                 android:name=".ConfigurarPuntosRuta"
                 android:exported="false" />
 
+        <activity
+                android:name=".SelectionActivity"
+                android:exported="false" />
         <activity
                 android:name=".Register"
                 android:exported="false" />

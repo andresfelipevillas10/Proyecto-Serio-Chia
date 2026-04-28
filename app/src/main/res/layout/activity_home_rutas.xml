@@ -353,6 +353,64 @@
                 </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- ── Botón Información de Buses ── -->
+            <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnBusInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="72dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    app:cardElevation="0dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardBackgroundColor="@color/bg_zenda"
+                    app:strokeColor="@color/input_stroke"
+                    app:strokeWidth="1dp">
+
+                <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingHorizontal="16dp">
+
+                    <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_bus"
+                            app:tint="@color/primary_zenda"
+                            android:layout_centerVertical="true"
+                            android:id="@+id/iconBusInfo"/>
+
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="16dp"
+                            android:layout_toEndOf="@id/iconBusInfo">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Información de Buses"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:textColor="@color/text_main"/>
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Tarifas, tipos y normas"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_variant"/>
+                    </LinearLayout>
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/text_variant"
+                            android:layout_centerVertical="true"
+                            android:layout_alignParentEnd="true"/>
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

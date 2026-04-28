@@ -8,11 +8,8 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Patterns
-import android.widget.AutoCompleteTextView
-import android.widget.ArrayAdapter
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
@@ -24,62 +21,50 @@ import com.google.firebase.database.FirebaseDatabase
 
 class Register : AppCompatActivity() {
 
-    private lateinit var auth: FirebaseAuth
-    private lateinit var dbRef: DatabaseReference
+    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private val dbRef: DatabaseReference by lazy { FirebaseDatabase.getInstance().getReference("users") }
 
+    private var userRole: String = "PASAJERO" // Valor por defecto
+
+    // UI References
     private lateinit var etNombre: TextInputEditText
     private lateinit var etApellido: TextInputEditText
     private lateinit var etTelefono: TextInputEditText
-    private lateinit var etDireccion: TextInputEditText
     private lateinit var etEmailReg: TextInputEditText
     private lateinit var etPassReg: TextInputEditText
     private lateinit var etNoBus: TextInputEditText
     private lateinit var atvTurno: AutoCompleteTextView
+    private lateinit var layoutConductorFields: LinearLayout
+    private lateinit var tvRegSubtitle: TextView
     private lateinit var btnRegister: MaterialButton
-    private lateinit var btnBack: ImageButton
-    private lateinit var btnPickPhoto: FloatingActionButton
-    private lateinit var tvToLogin: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        auth = FirebaseAuth.getInstance()
-        dbRef = FirebaseDatabase.getInstance().getReference("users")
+        // 1. CAPTURA DE ROL
+        userRole = intent.getStringExtra("USER_ROLE") ?: "PASAJERO"
 
         initViews()
+        applyRoleLogic()
         setupTurnoDropdown()
         setupLoginLink()
 
         btnRegister.setOnClickListener { validateAndRegister() }
-        btnBack.setOnClickListener { finish() }
-        tvToLogin.setOnClickListener { finish() }
-
-        btnPickPhoto.setOnClickListener {
-            Toast.makeText(this, "Próximamente: Selector de fotos", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun initViews() {
-        etNombre     = findViewById(R.id.etNombre)
-        etApellido   = findViewById(R.id.etApellido)
-        etTelefono   = findViewById(R.id.etTelefono)
-        etDireccion  = findViewById(R.id.etDireccion)
-        etEmailReg   = findViewById(R.id.etEmailReg)
-        etPassReg    = findViewById(R.id.etPassReg)
-        etNoBus      = findViewById(R.id.etNoBus)
-        atvTurno     = findViewById(R.id.atvTurno)
-        btnRegister  = findViewById(R.id.btnRegister)
-        btnBack      = findViewById(R.id.btnBack)
-        btnPickPhoto = findViewById(R.id.btnPickPhoto)
-        tvToLogin    = findViewById(R.id.tvToLogin)
-    }
+        etNombre = findViewById(R.id.etNombre)
+        etApellido = findViewById(R.id.etApellido)
+        etTelefono = findViewById(R.id.etTelefono)
+        etEmailReg = findViewById(R.id.etEmailReg)
+        etPassReg = findViewById(R.id.etPassReg)
+        etNoBus = findViewById(R.id.etNoBus)
+        atvTurno = findViewById(R.id.atvTurno)
+        layoutConductorFields = findViewById(R.id.layoutConductorFields)
+        tvRegSubtitle = findViewById(R.id.tvRegSubtitle)
+        btnRegister = findViewById(R.id.btnRegister)
 
-    private fun setupTurnoDropdown() {
-        val opciones = listOf("Mañana", "Tarde", "Noche")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
-        atvTurno.setAdapter(adapter)
-        atvTurno.setText(opciones[0], false) // valor por defecto sin filtrar
     }
 
     // Colorea "Iniciar Sesión" en verde sin necesidad de HtmlCompat
@@ -91,58 +76,83 @@ class Register : AppCompatActivity() {
 
         spannable.setSpan(ForegroundColorSpan(green), start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         spannable.setSpan(StyleSpan(Typeface.BOLD),    start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        tvToLogin.text = spannable
+
+    }
+
+    private fun applyRoleLogic() {
+        if (userRole == "PASAJERO") {
+            // Ocultar campos de conductor
+            layoutConductorFields.visibility = View.GONE
+            tvRegSubtitle.text = "Únete al camino de la tranquilidad, pasajero."
+        } else {
+            layoutConductorFields.visibility = View.VISIBLE
+            tvRegSubtitle.text = "Únete al camino de la tranquilidad, conductor."
+        }
     }
 
     private fun validateAndRegister() {
-        val nom   = etNombre.text.toString().trim()
-        val ape   = etApellido.text.toString().trim()
-        val tel   = etTelefono.text.toString().trim()
-        val dir   = etDireccion.text.toString().trim()
         val email = etEmailReg.text.toString().trim()
-        val pass  = etPassReg.text.toString().trim()
-        val bus   = etNoBus.text.toString().trim()
-        val turno = atvTurno.text.toString()
+        val pass = etPassReg.text.toString().trim()
+        val nom = etNombre.text.toString().trim()
+        val bus = etNoBus.text.toString().trim()
 
-        if (nom.isEmpty() || ape.isEmpty() || tel.isEmpty() || email.isEmpty() || pass.isEmpty() || bus.isEmpty()) {
-            Toast.makeText(this, "Por favor, llena todos los campos", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(this, "Email no válido", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (pass.length < 6) {
-            Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
+        // Validación base
+        if (nom.isEmpty() || email.isEmpty() || pass.isEmpty()) {
+            toast("Completa los campos obligatorios")
             return
         }
 
-        val userData = User(uid = null, nombre = nom, apellido = ape, telefono = tel,
-            direccion = dir, email = email, noBus = bus, turno = turno)
+        // Validación específica de rol (Encapsulamiento lógico)
+        if (userRole == "CONDUCTOR" && bus.isEmpty()) {
+            toast("El número de bus es obligatorio para conductores")
+            return
+        }
+
+        // Proceder con el registro
+        val userData = User(
+            uid = null,
+            nombre = nom,
+            email = email,
+            noBus = if (userRole == "CONDUCTOR") bus else null,
+            turno = if (userRole == "CONDUCTOR") atvTurno.text.toString() else null,
+            rol = userRole // Asegúrate de añadir el campo 'rol' en tu clase User.kt
+        )
+
         signUp(email, pass, userData)
     }
 
     private fun signUp(email: String, pass: String, userData: User) {
-        auth.createUserWithEmailAndPassword(email, pass)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
-                    addUserDatabase(userId, userData.copy(uid = userId))
-                } else {
-                    Toast.makeText(this, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-                }
+        auth.createUserWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
+                saveInDatabase(userId, userData.copy(uid = userId))
+            } else {
+                toast("Error: ${task.exception?.message}")
             }
+        }
     }
 
-    private fun addUserDatabase(uid: String, user: User) {
-        dbRef.child(uid).setValue(user)
-            .addOnSuccessListener {
-                Toast.makeText(this, "¡Conductor registrado!", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this, Login::class.java))
-                finish()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error al guardar: ${e.message}", Toast.LENGTH_LONG).show()
-            }
+    private fun saveInDatabase(uid: String, user: User) {
+        // Guardar bajo el nodo de su respectivo rol para Clean Data
+        val path = if (userRole == "CONDUCTOR") "conductores" else "pasajeros"
+
+        dbRef.child(path).child(uid).setValue(user).addOnSuccessListener {
+            toast("¡$userRole registrado exitosamente!")
+            startActivity(Intent(this, Login::class.java))
+            finish()
+        }
     }
+
+    private fun toast(m: String) = Toast.makeText(this, m, Toast.LENGTH_SHORT).show()
+
+    private fun setupTurnoDropdown() {
+        val opciones = listOf("Mañana", "Tarde", "Noche")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
+        atvTurno.setAdapter(adapter)
+        atvTurno.setText(opciones[0], false) // valor por defecto sin filtrar
+    }
+
+
 }
+
+

@@ -28,6 +28,7 @@ class HomeRutasActivity : AppCompatActivity() {
     private lateinit var btnFollowRoute: MaterialButton
     private lateinit var btnNewRoute: MaterialCardView
     private lateinit var btnReportIncident: MaterialCardView
+    private lateinit var btnBusInfo: MaterialCardView
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var badgeLive: TextView
 
@@ -55,6 +56,7 @@ class HomeRutasActivity : AppCompatActivity() {
         // 🚨 Inicializamos las tarjetas interactivas
         btnNewRoute = findViewById(R.id.btnNewRoute)
         btnReportIncident = findViewById(R.id.btnReportIncident)
+        btnBusInfo = findViewById(R.id.btnBusInfo)
 
         bottomNav = findViewById(R.id.bottomNav)
         badgeLive = findViewById(R.id.badgeLive)
@@ -79,6 +81,8 @@ class HomeRutasActivity : AppCompatActivity() {
         btnReportIncident.setOnClickListener {
             showToast("Reporte de incidente abierto")
         }
+
+
     }
 
     private fun setupFirebaseListeners() {
