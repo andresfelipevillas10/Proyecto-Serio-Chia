@@ -11,6 +11,7 @@ import androidx.core.text.HtmlCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class Login : AppCompatActivity() {
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
@@ -71,10 +72,40 @@ class Login : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, pass)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
+                    checkRoleAndNavigate()
                 } else {
                     toast("Error: ${task.exception?.message}")
                 }
+            }
+    }
+
+    private fun checkRoleAndNavigate() {
+        val uid = auth.currentUser?.uid ?: run {
+            navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
+            return
+        }
+        val usersRef = FirebaseDatabase.getInstance().getReference("users")
+
+        usersRef.child("conductores").child(uid).get()
+            .addOnSuccessListener { conductorSnap ->
+                if (conductorSnap.exists()) {
+                    navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
+                } else {
+                    usersRef.child("pasajeros").child(uid).get()
+                        .addOnSuccessListener { pasajeroSnap ->
+                            if (pasajeroSnap.exists()) {
+                                navigateTo(PasajeroHomeActivity::class.java, finishCurrent = true)
+                            } else {
+                                navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
+                            }
+                        }
+                        .addOnFailureListener {
+                            navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
+                        }
+                }
+            }
+            .addOnFailureListener {
+                navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
             }
     }
 

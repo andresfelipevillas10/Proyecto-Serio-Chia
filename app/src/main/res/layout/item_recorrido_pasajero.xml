@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/cardRecorridoActivo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:cardElevation="0dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="#1A1C22"
+        app:strokeWidth="0dp"
+        android:foreground="?attr/selectableItemBackground">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+        <!-- Fila superior: badge EN VIVO + hora inicio -->
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            <TextView
+                    android:id="@+id/tvEstadoRecorrido"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● EN VIVO"
+                    android:background="@drawable/bg_live_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="@color/primary_zenda"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:layout_centerVertical="true"/>
+
+            <TextView
+                    android:id="@+id/tvHoraInicio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Salida: --:--"
+                    android:textColor="#AAAAAA"
+                    android:textSize="12sp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"/>
+        </RelativeLayout>
+
+        <!-- Nombre de la ruta -->
+        <TextView
+                android:id="@+id/tvNombreRuta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nombre de ruta"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:layout_marginTop="10dp"/>
+
+        <!-- Separador -->
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#333333"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="10dp"/>
+
+        <!-- Indicador "Toca para ver" -->
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            <ImageView
+                    android:id="@+id/iconMapHint"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_location_on"
+                    app:tint="@color/primary_zenda"
+                    android:layout_centerVertical="true"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Toca para ver el bus en tiempo real"
+                    android:textColor="#AAAAAA"
+                    android:textSize="12sp"
+                    android:layout_toEndOf="@id/iconMapHint"
+                    android:layout_marginStart="6dp"
+                    android:layout_centerVertical="true"/>
+
+            <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_forward"
+                    app:tint="@color/primary_zenda"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"/>
+        </RelativeLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
