@@ -203,7 +203,7 @@ class SeguimientoBusActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun abrirNavegacion() {
         if (nearestStopLat == 0.0 && nearestStopLng == 0.0) {
-            Toast.makeText(this, "Cargando información de la ruta...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.loading_route_info), Toast.LENGTH_SHORT).show()
             return
         }
 

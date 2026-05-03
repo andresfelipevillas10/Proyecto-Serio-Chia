@@ -39,24 +39,25 @@ class PuntoSeguimientoAdapter(
     override fun onBindViewHolder(holder: PuntoSeguimientoViewHolder, position: Int) {
         val punto = listaPuntos[position]
 
+        val context = holder.itemView.context
         holder.tvNombrePuntoSeguimiento.text = "${punto.orden}. ${punto.nombre}"
-        holder.tvTipoPuntoSeguimiento.text = "Tipo: ${punto.tipo}"
+        holder.tvTipoPuntoSeguimiento.text = context.getString(R.string.label_type, punto.tipo)
 
         when {
             punto.completado -> {
-                holder.tvEstadoPuntoSeguimiento.text = "Estado: completado"
+                holder.tvEstadoPuntoSeguimiento.text = context.getString(R.string.state_completed)
                 holder.tvEstadoPuntoSeguimiento.setTextColor(Color.parseColor("#1B5E20"))
                 holder.layoutItemPuntoSeguimiento.setBackgroundColor(Color.parseColor("#C8E6C9"))
             }
 
             punto.esSiguiente -> {
-                holder.tvEstadoPuntoSeguimiento.text = "Estado: siguiente punto"
+                holder.tvEstadoPuntoSeguimiento.text = context.getString(R.string.state_next)
                 holder.tvEstadoPuntoSeguimiento.setTextColor(Color.parseColor("#0D47A1"))
                 holder.layoutItemPuntoSeguimiento.setBackgroundColor(Color.parseColor("#BBDEFB"))
             }
 
             else -> {
-                holder.tvEstadoPuntoSeguimiento.text = "Estado: pendiente"
+                holder.tvEstadoPuntoSeguimiento.text = context.getString(R.string.state_pending)
                 holder.tvEstadoPuntoSeguimiento.setTextColor(Color.parseColor("#616161"))
                 holder.layoutItemPuntoSeguimiento.setBackgroundColor(Color.parseColor("#F5F5F5"))
             }
@@ -64,16 +65,16 @@ class PuntoSeguimientoAdapter(
 
         holder.tvTiempoDesdeAnteriorSeguimiento.text =
             if (punto.completado) {
-                "Tiempo desde anterior: ${formatearDuracion(punto.tiempoDesdeAnteriorMs)}"
+                context.getString(R.string.time_from_previous, formatearDuracion(punto.tiempoDesdeAnteriorMs))
             } else {
-                "Tiempo desde anterior: --"
+                context.getString(R.string.time_from_previous_empty)
             }
 
         holder.tvTiempoAcumuladoSeguimiento.text =
             if (punto.completado) {
-                "Tiempo acumulado: ${formatearDuracion(punto.tiempoAcumuladoRutaMs)}"
+                context.getString(R.string.accumulated_time, formatearDuracion(punto.tiempoAcumuladoRutaMs))
             } else {
-                "Tiempo acumulado: --"
+                context.getString(R.string.accumulated_time_empty)
             }
     }
 

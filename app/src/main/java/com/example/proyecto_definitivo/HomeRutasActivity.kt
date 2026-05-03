@@ -116,7 +116,7 @@ class HomeRutasActivity : AppCompatActivity() {
         }
 
         btnReportIncident.setOnClickListener {
-            showToast("Reporte de incidente abierto")
+            showToast(getString(R.string.incident_report_open))
         }
     }
 
