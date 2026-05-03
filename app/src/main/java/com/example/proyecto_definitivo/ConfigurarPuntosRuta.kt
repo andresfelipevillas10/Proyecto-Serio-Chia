@@ -218,8 +218,8 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
             val lat = etLat.text.toString().toDoubleOrNull() ?: latLng.latitude
             val lng = etLng.text.toString().toDoubleOrNull() ?: latLng.longitude
 
-            if (nombre.isEmpty()) { etNombre.error = "Falta nombre"; return@setOnClickListener }
-            if (orden <= 0) { etOrden.error = "Orden inválido"; return@setOnClickListener }
+            if (nombre.isEmpty()) { etNombre.error = getString(R.string.error_missing_name); return@setOnClickListener }
+            if (orden <= 0) { etOrden.error = getString(R.string.error_invalid_order); return@setOnClickListener }
 
             validarYGuardarPunto(nombre, lat, lng, orden, tipo, dialog, puntoExistente?.id)
         }

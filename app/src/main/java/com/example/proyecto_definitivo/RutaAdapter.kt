@@ -32,7 +32,11 @@ class RutaAdapter(
         val ruta = listaRutas[position]
 
         holder.tvNombre.text = ruta.nombre
-        holder.tvDetalles.text = "Radio: ${ruta.radioDeteccion}m • ${ruta.descripcion}"
+        holder.tvDetalles.text = holder.itemView.context.getString(
+            R.string.route_details_format,
+            ruta.radioDeteccion,
+            ruta.descripcion
+        )
 
         // Conectamos los 3 botones
         holder.btnEditar.setOnClickListener { onEditClick(ruta) }

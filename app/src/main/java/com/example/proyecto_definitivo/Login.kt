@@ -62,8 +62,8 @@ class Login : AppCompatActivity() {
         val pass = etPassword.text.toString().trim()
 
         when {
-            email.isEmpty() || pass.isEmpty() -> toast("Por favor, completa todos los campos")
-            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> toast("El formato del correo no es válido")
+            email.isEmpty() || pass.isEmpty() -> toast(getString(R.string.error_complete_fields))
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> toast(getString(R.string.error_invalid_format_email))
             else -> login(email, pass)
         }
     }
@@ -74,7 +74,7 @@ class Login : AppCompatActivity() {
                 if (task.isSuccessful) {
                     checkRoleAndNavigate()
                 } else {
-                    toast("Error: ${task.exception?.message}")
+                    toast(getString(R.string.error_login_generic, task.exception?.message ?: ""))
                 }
             }
     }
