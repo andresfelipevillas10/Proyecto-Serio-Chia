@@ -1,39 +1,31 @@
 package com.example.proyecto_definitivo
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.HtmlCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
 class Login : AppCompatActivity() {
+    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
-    private lateinit var auth: FirebaseAuth
-
-    // Inputs
+    // Referencias de UI
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
-
-    // Layouts (para errores)
-    private lateinit var tilEmail: TextInputLayout
-    private lateinit var tilPassword: TextInputLayout
-
-    // UI
-    private lateinit var btnLogin: MaterialButton
+    private lateinit var btnIngresar: MaterialButton
     private lateinit var tvRegister: TextView
     private lateinit var tvOlvidoPass: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
-        auth = FirebaseAuth.getInstance()
 
         initViews()
         setupListeners()
@@ -42,131 +34,88 @@ class Login : AppCompatActivity() {
     private fun initViews() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
-
-        tilEmail = findViewById(R.id.tilEmail)
-        tilPassword = findViewById(R.id.tilPassword)
-
-        btnLogin = findViewById(R.id.btnLogin)
+        btnIngresar = findViewById(R.id.btnLogin)
         tvRegister = findViewById(R.id.tvRegister)
         tvOlvidoPass = findViewById(R.id.tvOlvidoPassword)
+
+        tvRegister.text = HtmlCompat.fromHtml(
+            getString(R.string.new_user),
+            HtmlCompat.FROM_HTML_MODE_LEGACY
+        )
     }
 
     private fun setupListeners() {
+        btnIngresar.setOnClickListener { validateAndLogin() }
 
-        btnLogin.setOnClickListener {
-            validateAndLogin()
-        }
-
+        // REDIRECCIÓN OPTIMIZADA: Hacia SelectionActivity (Rol Selection)
         tvRegister.setOnClickListener {
-            startActivity(Intent(this, SelectionActivity::class.java))
+            navigateTo(SelectionActivity::class.java)
         }
 
         tvOlvidoPass.setOnClickListener {
-            startActivity(Intent(this, ForgotPasswordActivity::class.java))
+            navigateTo(ForgotPasswordActivity::class.java)
         }
     }
 
-    // 🔥 VALIDACIÓN PRO (sin Toasts innecesarios)
     private fun validateAndLogin() {
-
-        clearErrors()
-
         val email = etEmail.text.toString().trim()
-        val password = etPassword.text.toString().trim()
+        val pass = etPassword.text.toString().trim()
 
-        var isValid = true
-
-        if (email.isEmpty()) {
-            tilEmail.error = "Campo requerido"
-            isValid = false
-        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            tilEmail.error = "Correo inválido"
-            isValid = false
+        when {
+            email.isEmpty() || pass.isEmpty() -> toast("Por favor, completa todos los campos")
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> toast("El formato del correo no es válido")
+            else -> login(email, pass)
         }
-
-        if (password.isEmpty()) {
-            tilPassword.error = "Campo requerido"
-            isValid = false
-        } else if (password.length < 6) {
-            tilPassword.error = "Mínimo 6 caracteres"
-            isValid = false
-        }
-
-        if (!isValid) return
-
-        loginUser(email, password)
     }
 
-    private fun clearErrors() {
-        tilEmail.error = null
-        tilPassword.error = null
-    }
-
-    // 🔐 LOGIN FIREBASE
-    private fun loginUser(email: String, password: String) {
-
-        btnLogin.isEnabled = false
-
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-
-                btnLogin.isEnabled = true
-
+    private fun login(email: String, pass: String) {
+        auth.signInWithEmailAndPassword(email, pass)
+            .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    checkUserRole()
+                    checkRoleAndNavigate()
                 } else {
-                    Toast.makeText(
-                        this,
-                        "Error: ${task.exception?.message ?: "No se pudo iniciar sesión"}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    toast("Error: ${task.exception?.message}")
                 }
             }
     }
 
-    // 🎯 REDIRECCIÓN SEGÚN ROL
-    private fun checkUserRole() {
-
-        val uid = auth.currentUser?.uid
-
-        if (uid == null) {
-            goTo(HomeRutasActivity::class.java)
+    private fun checkRoleAndNavigate() {
+        val uid = auth.currentUser?.uid ?: run {
+            navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
             return
         }
+        val usersRef = FirebaseDatabase.getInstance().getReference("users")
 
-        val db = FirebaseDatabase.getInstance().reference.child("users")
-
-        db.child("conductores").child(uid).get()
+        usersRef.child("conductores").child(uid).get()
             .addOnSuccessListener { conductorSnap ->
-
                 if (conductorSnap.exists()) {
-                    goTo(HomeRutasActivity::class.java, true)
+                    navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
                 } else {
-
-                    db.child("pasajeros").child(uid).get()
+                    usersRef.child("pasajeros").child(uid).get()
                         .addOnSuccessListener { pasajeroSnap ->
-
                             if (pasajeroSnap.exists()) {
-                                goTo(PasajeroHomeActivity::class.java, true)
+                                navigateTo(PasajeroHomeActivity::class.java, finishCurrent = true)
                             } else {
-                                goTo(HomeRutasActivity::class.java, true)
+                                navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
                             }
-
                         }
                         .addOnFailureListener {
-                            goTo(HomeRutasActivity::class.java, true)
+                            navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
                         }
                 }
-
             }
             .addOnFailureListener {
-                goTo(HomeRutasActivity::class.java, true)
+                navigateTo(HomeRutasActivity::class.java, finishCurrent = true)
             }
     }
 
-    // 🚀 NAV HELPER
-    private fun goTo(destination: Class<*>, finishCurrent: Boolean = false) {
-        startActivity(Intent(this, destination))
+    // Funciones de utilidad idiomáticas
+    private fun <T> navigateTo(clazz: Class<T>, finishCurrent: Boolean = false) {
+        startActivity(Intent(this, clazz))
         if (finishCurrent) finish()
+    }
+
+    private fun toast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
