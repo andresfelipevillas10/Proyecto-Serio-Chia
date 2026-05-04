@@ -76,13 +76,15 @@ class PasajeroHomeActivity : AppCompatActivity() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 listaRecorridos.clear()
 
-                for (recorridoSnap in snapshot.children) {
-                    val recorrido = recorridoSnap.getValue(Recorrido::class.java) ?: continue
-                    if (recorrido.estado == "en_proceso") {
-                        if (recorrido.id.isEmpty()) {
-                            recorrido.id = recorridoSnap.key ?: continue
+                for (conductorSnap in snapshot.children) {
+                    for (recorridoSnap in conductorSnap.children) {
+                        val recorrido = recorridoSnap.getValue(Recorrido::class.java) ?: continue
+                        if (recorrido.estado == "en_proceso") {
+                            if (recorrido.id.isEmpty()) {
+                                recorrido.id = recorridoSnap.key ?: continue
+                            }
+                            listaRecorridos.add(recorrido)
                         }
-                        listaRecorridos.add(recorrido)
                     }
                 }
 

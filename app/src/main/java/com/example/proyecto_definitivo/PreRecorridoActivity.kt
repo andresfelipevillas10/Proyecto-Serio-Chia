@@ -77,12 +77,12 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
                 return@setOnClickListener
             }
 
-            // 1. Preparamos el terreno en la Base de Datos
-            val recorridosRef = db.child("recorridos").push()
-            val nuevoRecorridoId = recorridosRef.key ?: ""
-
             // Obtenemos el ID del conductor actual (Si aún no tienes el Auth listo, le ponemos un dummy temporal)
             val conductorId = FirebaseAuth.getInstance().currentUser?.uid ?: "conductor_demo_123"
+
+            // 1. Preparamos el terreno en la Base de Datos
+            val recorridosRef = db.child("recorridos").child(conductorId).push()
+            val nuevoRecorridoId = recorridosRef.key ?: ""
 
             // 2. Creamos el objeto con tu nueva clase
             val recorridoDeHoy = Recorrido(

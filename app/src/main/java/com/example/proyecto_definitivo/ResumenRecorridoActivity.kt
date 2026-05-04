@@ -61,7 +61,8 @@ class ResumenRecorridoActivity : AppCompatActivity() {
     }
 
     private fun cargarResumenGeneral() {
-        db.child("recorridos").child(recorridoId).get().addOnSuccessListener { snapshot ->
+        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.child("recorridos").child(currentUserId).child(recorridoId).get().addOnSuccessListener { snapshot ->
             if (snapshot.exists()) {
                 val nombre = snapshot.child("rutaNombre").getValue(String::class.java) ?: getString(R.string.unknown_route)
 
@@ -83,7 +84,8 @@ class ResumenRecorridoActivity : AppCompatActivity() {
     }
 
     private fun cargarPuntosCompletados() {
-        db.child("recorridos").child(recorridoId).child("puntosRegistrados").get().addOnSuccessListener { snapshot ->
+        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.child("recorridos").child(currentUserId).child(recorridoId).child("puntosRegistrados").get().addOnSuccessListener { snapshot ->
             listaPuntosCompletados.clear()
 
             for (puntoSnap in snapshot.children) {

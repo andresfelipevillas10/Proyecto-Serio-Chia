@@ -51,6 +51,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     // Lógica de tracking
     private val listaPuntos = mutableListOf<PuntoRuta>()
     private var indicePuntoActual = 0
+    private var conteoConfirmacionLlegada = 0
     private var tiempoUltimoPunto: Long = 0L
     private var tiempoInicioRuta: Long = 0L
 
@@ -94,6 +95,23 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             Toast.makeText(this, "Novedad registrada (En desarrollo)", Toast.LENGTH_SHORT).show()
         }
 
+        // MODO TEST: Al mantener presionado el nombre de la parada, simulamos llegada
+        tvActiveNextStop.setOnLongClickListener {
+            if (indicePuntoActual < listaPuntos.size) {
+                val punto = listaPuntos[indicePuntoActual]
+                registrarLlegadaEnFirebase(punto)
+                Toast.makeText(this, "[TEST] Llegada simulada a ${punto.nombre}", Toast.LENGTH_SHORT).show()
+                indicePuntoActual++
+                if (indicePuntoActual < listaPuntos.size) {
+                    actualizarTarjetaProximaParada(null)
+                } else {
+                    tvActiveNextStop.text = getString(R.string.route_completed)
+                    finalizarRecorrido(esAutomatico = true)
+                }
+            }
+            true
+        }
+
         // 5. Configurar GPS
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         configurarMotorUbicacion()
@@ -128,6 +146,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         if (rutaId.isEmpty()) return
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
+        // Primero obtenemos los puntos de la ruta
         db.child("rutas").child(currentUserId).child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
             listaPuntos.clear()
             for (puntoSnap in snapshot.children) {
@@ -136,8 +155,18 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             listaPuntos.sortBy { it.orden }
 
-            dibujarPuntos()
-            actualizarTarjetaProximaParada(null) // Inicializa la tarjeta con el primer punto
+            // Luego intentamos recuperar el progreso guardado
+            db.child("users").child(currentUserId).child("ruta_actual").child("puntos_completados").get()
+                .addOnSuccessListener { progSnap ->
+                    indicePuntoActual = progSnap.getValue(Int::class.java) ?: 0
+
+                    dibujarPuntos()
+                    actualizarTarjetaProximaParada(null) // Inicializa la tarjeta con el punto que toca
+                }
+                .addOnFailureListener {
+                    dibujarPuntos()
+                    actualizarTarjetaProximaParada(null)
+                }
         }
     }
 
@@ -207,11 +236,10 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun procesarUbicacion(location: Location) {
-        // --- ¡NUEVO FILTRO ANTI-SALTOS! ---
-        // location.accuracy te dice el margen de error en metros.
-        // Si el error es mayor a 20 metros, ignoramos este dato porque es "basura".
-        if (location.hasAccuracy() && location.accuracy > 20f) {
-            return // Abortar: no actualizamos el mapa ni la línea
+        // --- ¡FILTRO ANTI-SALTOS MEJORADO! ---
+        // Si el error es mayor a 15 metros, ignoramos este dato.
+        if (location.hasAccuracy() && location.accuracy > 15f) {
+            return
         }
         // 1. Centrar cámara en el conductor
         val posicionActual = LatLng(location.latitude, location.longitude)
@@ -238,7 +266,8 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // --- NUEVO: Actualizar posición en tiempo real en Firebase ---
         if (recorridoId.isNotEmpty()) {
-            db.child("recorridos").child(recorridoId).updateChildren(mapOf(
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+            db.child("recorridos").child(currentUserId).child(recorridoId).updateChildren(mapOf(
                 "latitudActual" to location.latitude,
                 "longitudActual" to location.longitude
             ))
@@ -259,19 +288,26 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         // Actualizar UI con la distancia restante cada que nos movemos
         actualizarTarjetaProximaParada(distanciaMetros)
 
-        // 4. ¿Llegamos al punto?
+        // 4. ¿Llegamos al punto? (Lógica de Doble Confirmación)
         if (distanciaMetros <= rutaRadio) {
-            registrarLlegadaEnFirebase(puntoEsperado)
-            Toast.makeText(this, getString(R.string.arrived_at, puntoEsperado.nombre), Toast.LENGTH_SHORT).show()
-            indicePuntoActual++
+            conteoConfirmacionLlegada++
 
-            if (indicePuntoActual < listaPuntos.size) {
-                actualizarTarjetaProximaParada(null) // Prepara el siguiente
-            } else {
-                tvActiveNextStop.text = getString(R.string.route_completed)
-                tvActiveDistance.text = "0m"
-                finalizarRecorrido(esAutomatico = true)
+            if (conteoConfirmacionLlegada >= 2) {
+                conteoConfirmacionLlegada = 0
+                registrarLlegadaEnFirebase(puntoEsperado)
+                Toast.makeText(this, getString(R.string.arrived_at, puntoEsperado.nombre), Toast.LENGTH_SHORT).show()
+                indicePuntoActual++
+
+                if (indicePuntoActual < listaPuntos.size) {
+                    actualizarTarjetaProximaParada(null) // Prepara el siguiente
+                } else {
+                    tvActiveNextStop.text = getString(R.string.route_completed)
+                    tvActiveDistance.text = "0m"
+                    finalizarRecorrido(esAutomatico = true)
+                }
             }
+        } else {
+            conteoConfirmacionLlegada = 0 // Reset si nos alejamos
         }
     }
 
@@ -285,15 +321,16 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
                 // Calculo simple de tiempo: asumiendo 30km/h (8.3 m/s)
                 val segundos = distanciaAproximada / 8.3f
                 val minutos = (segundos / 60).toInt()
-                tvActiveTime.text = if (minutos < 1) "aprox. 1 min" else "aprox. $minutos min"
+                tvActiveTime.text = if (minutos < 1) getString(R.string.approx_one_min) else getString(R.string.approx_min_format, minutos)
             } else {
                 tvActiveDistance.text = "--"
-                tvActiveTime.text = "Calculando..."
+                tvActiveTime.text = getString(R.string.calculating)
             }
         }
     }
 
     private fun registrarLlegadaEnFirebase(punto: PuntoRuta) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         if (recorridoId.isEmpty()) return
 
         val ahora = System.currentTimeMillis()
@@ -313,24 +350,21 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             "tiempoAcumuladoRutaMs" to tiempoAcumulado
         )
 
-        db.child("recorridos").child(recorridoId).child("puntosRegistrados").child(punto.id).setValue(puntoRegistrado)
+        db.child("recorridos").child(currentUserId).child(recorridoId).child("puntosRegistrados").child(punto.id).setValue(puntoRegistrado)
 
         // Actualizar progreso en el perfil del usuario para el Hub
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-        if (currentUserId != null) {
-            db.child("users").child(currentUserId).child("ruta_actual").child("puntos_completados").setValue(indicePuntoActual + 1)
-        }
+        db.child("users").child(currentUserId).child("ruta_actual").child("puntos_completados").setValue(indicePuntoActual + 1)
 
         tiempoUltimoPunto = ahora
     }
 
     private fun solicitarClaveFinalizacion() {
-        val editText = EditText(this).apply { hint = "Ingrese la clave" }
+        val editText = EditText(this).apply { hint = getString(R.string.enter_key_hint) }
         AlertDialog.Builder(this)
-            .setTitle("Finalizar Ruta")
-            .setMessage("Digite la clave maestra")
+            .setTitle(R.string.finish_route_title)
+            .setMessage(R.string.enter_master_key)
             .setView(editText)
-            .setPositiveButton("Validar") { _, _ ->
+            .setPositiveButton(R.string.validate) { _, _ ->
                 if (editText.text.toString().trim() == "1234") { // Usa tu Constante aquí
                     finalizarRecorrido(esAutomatico = false)
                 } else {
@@ -343,13 +377,13 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun mostrarAlertaSeguridad() {
         AlertDialog.Builder(this)
-            .setTitle("¡ATENCIÓN! SEGURIDAD PRIMERO")
-            .setMessage("¿Desea salir al Hub principal?\n\nLa ruta seguirá activa y podrá retomarla más tarde.\n\nRecuerde mantener las MANOS AL VOLANTE y solo manipular el teléfono cuando el vehículo esté detenido.")
-            .setPositiveButton("SÍ, SALIR AL HUB") { _, _ ->
+            .setTitle(R.string.safety_alert_title)
+            .setMessage(R.string.safety_alert_message)
+            .setPositiveButton(R.string.safety_exit_confirm) { _, _ ->
                 // Al salir por seguridad, NO cancelamos la ruta. Solo volvemos al Hub.
                 salirSeguridad()
             }
-            .setNegativeButton("VOLVER A LA RUTA", null)
+            .setNegativeButton(R.string.back_to_route, null)
             .setIcon(android.R.drawable.ic_dialog_alert)
             .show()
     }
@@ -367,7 +401,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun finalizarRecorrido(esAutomatico: Boolean) {
         fusedLocationClient.removeLocationUpdates(locationCallback) // Apagar GPS
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         if (recorridoId.isNotEmpty()) {
             val finTiempo = System.currentTimeMillis()
@@ -377,11 +411,9 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
                 "tiempoTotalMs" to (finTiempo - tiempoInicioRuta),
                 "estado" to estadoFinal
             )
-            db.child("recorridos").child(recorridoId).updateChildren(actualizacion).addOnSuccessListener {
+            db.child("recorridos").child(currentUserId).child(recorridoId).updateChildren(actualizacion).addOnSuccessListener {
                 // Limpiar ruta activa del perfil
-                if (currentUserId != null) {
-                    db.child("users").child(currentUserId).child("ruta_actual").removeValue()
-                }
+                db.child("users").child(currentUserId).child("ruta_actual").removeValue()
 
                 Toast.makeText(this, getString(R.string.route_finished), Toast.LENGTH_SHORT).show()
 

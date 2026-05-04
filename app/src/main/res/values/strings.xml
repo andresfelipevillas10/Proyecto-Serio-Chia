@@ -99,4 +99,15 @@
     <string name="route_details_format">Radio: %1$.0fm • %2$s</string>
     <string name="error_missing_name">Falta nombre</string>
     <string name="error_invalid_order">Orden inválido</string>
+    <string name="approx_one_min">aprox. 1 min</string>
+    <string name="approx_min_format">aprox. %1$d min</string>
+    <string name="calculating">Calculando...</string>
+    <string name="enter_key_hint">Ingrese la clave</string>
+    <string name="finish_route_title">Finalizar Ruta</string>
+    <string name="enter_master_key">Digite la clave maestra</string>
+    <string name="validate">Validar</string>
+    <string name="safety_alert_title">¡ATENCIÓN! SEGURIDAD PRIMERO</string>
+    <string name="safety_alert_message">¿Desea salir al Hub principal?\n\nLa ruta seguirá activa y podrá retomarla más tarde.\n\nRecuerde mantener las MANOS AL VOLANTE y solo manipular el teléfono cuando el vehículo esté detenido.</string>
+    <string name="safety_exit_confirm">SÍ, SALIR AL HUB</string>
+    <string name="back_to_route">VOLVER A LA RUTA</string>
 </resources>

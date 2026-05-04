@@ -3,6 +3,7 @@ package com.example.proyecto_definitivo
 import android.net.Uri
 import android.os.Bundle
 import android.util.Patterns
+import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -25,7 +26,7 @@ class Register : AppCompatActivity() {
     private lateinit var inputBus: TextInputLayout
     private lateinit var inputTurno: TextInputLayout
 
-    private lateinit var imgProfile: ImageView
+    private lateinit var imgProfile: View // Changed to View because of FrameLayout ID usage or we need to find it by child
     private var imageUri: Uri? = null
 
     private var role: String = "PASAJERO"
@@ -34,7 +35,9 @@ class Register : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let {
                 imageUri = it
-                imgProfile.setImageURI(it)
+                // It's a FrameLayout in XML, first child is a View, second is ImageView
+                val iv = (imgProfile as FrameLayout).getChildAt(1) as ImageView
+                iv.setImageURI(it)
             }
         }
 
@@ -47,16 +50,20 @@ class Register : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        inputNombre = findViewById(R.id.inputNombre)
-        inputApellido = findViewById(R.id.inputApellido)
-        inputEmail = findViewById(R.id.inputEmail)
+        // IDs in layout are mostly TextInputEditText, but we want TextInputLayout for error setting
+        // Actually, looking at layout, some don't have IDs on TextInputLayout but only on TextInputEditText
+        // Let's find the parents of the EditTexts
+
+        inputNombre = (findViewById<EditText>(R.id.etNombre).parent.parent as View).parent as TextInputLayout
+        inputApellido = (findViewById<EditText>(R.id.etApellido).parent.parent as View).parent as TextInputLayout
+        inputEmail = (findViewById<EditText>(R.id.etEmailReg).parent.parent as View).parent as TextInputLayout
         inputPassword = findViewById(R.id.inputPassword)
-        inputTelefono = findViewById(R.id.inputTelefono)
-        inputDireccion = findViewById(R.id.inputDireccion)
-        inputBus = findViewById(R.id.inputBus)
+        inputTelefono = (findViewById<EditText>(R.id.etTelefono).parent.parent as View).parent as TextInputLayout
+        inputDireccion = (findViewById<EditText>(R.id.etDireccion).parent.parent as View).parent as TextInputLayout
+        inputBus = (findViewById<EditText>(R.id.etNoBus).parent.parent as View).parent as TextInputLayout
         inputTurno = findViewById(R.id.inputTurno)
 
-        imgProfile = findViewById(R.id.imgProfile)
+        imgProfile = findViewById(R.id.profileContainer)
 
         findViewById<Button>(R.id.btnRegister).setOnClickListener { validate() }
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
@@ -84,8 +91,8 @@ class Register : AppCompatActivity() {
 
         val telefono = findViewById<EditText>(R.id.etTelefono).text.toString()
         val direccion = findViewById<EditText>(R.id.etDireccion).text.toString()
-        val bus = findViewById<EditText>(R.id.etBus).text.toString()
-        val turno = findViewById<EditText>(R.id.etTurno).text.toString()
+        val bus = findViewById<EditText>(R.id.etNoBus).text.toString()
+        val turno = findViewById<AutoCompleteTextView>(R.id.atvTurno).text.toString()
 
         var valid = true
 
@@ -172,7 +179,7 @@ class Register : AppCompatActivity() {
         val ref = FirebaseStorage.getInstance().reference.child("profile/$uid.jpg")
 
         ref.putFile(imageUri!!)
-            .continueWithTask { ref.downloadUrl }
+            .continueWithTask { task -> ref.downloadUrl }
             .addOnSuccessListener { url ->
 
                 val user = User(
