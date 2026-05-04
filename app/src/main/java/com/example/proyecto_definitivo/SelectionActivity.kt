@@ -9,7 +9,7 @@ class SelectionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.selection_activity) // El XML que diseñamos previamente
+        setContentView(R.layout.selection_activity)
 
         setupSelectionLogic()
     }
@@ -27,14 +27,12 @@ class SelectionActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Despacho de flujo basado en rol.
-     * Se utiliza un solo punto de salida para facilitar el mantenimiento.
-     */
     private fun startRegistration(role: String) {
         val intent = Intent(this, Register::class.java).apply {
             putExtra("USER_ROLE", role)
         }
+
         startActivity(intent)
+        finish() // 🔥 evita volver atrás
     }
 }

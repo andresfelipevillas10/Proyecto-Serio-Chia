@@ -1,158 +1,215 @@
 package com.example.proyecto_definitivo
 
-import android.content.Intent
-import android.graphics.Typeface
+import android.net.Uri
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.text.style.StyleSpan
 import android.util.Patterns
-import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
+
 
 class Register : AppCompatActivity() {
 
-    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
-    private val dbRef: DatabaseReference by lazy { FirebaseDatabase.getInstance().getReference("users") }
+    private lateinit var auth: FirebaseAuth
 
-    private var userRole: String = "PASAJERO" // Valor por defecto
+    private lateinit var inputNombre: TextInputLayout
+    private lateinit var inputApellido: TextInputLayout
+    private lateinit var inputEmail: TextInputLayout
+    private lateinit var inputPassword: TextInputLayout
+    private lateinit var inputTelefono: TextInputLayout
+    private lateinit var inputDireccion: TextInputLayout
+    private lateinit var inputBus: TextInputLayout
+    private lateinit var inputTurno: TextInputLayout
 
-    // UI References
-    private lateinit var etNombre: TextInputEditText
-    private lateinit var etApellido: TextInputEditText
-    private lateinit var etTelefono: TextInputEditText
-    private lateinit var etEmailReg: TextInputEditText
-    private lateinit var etPassReg: TextInputEditText
-    private lateinit var etNoBus: TextInputEditText
-    private lateinit var atvTurno: AutoCompleteTextView
-    private lateinit var layoutConductorFields: LinearLayout
-    private lateinit var tvRegSubtitle: TextView
-    private lateinit var btnRegister: MaterialButton
+    private lateinit var imgProfile: ImageView
+    private var imageUri: Uri? = null
+
+    private var role: String = "PASAJERO"
+
+    private val pickImage =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                imageUri = it
+                imgProfile.setImageURI(it)
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        // 1. CAPTURA DE ROL
-        userRole = intent.getStringExtra("USER_ROLE") ?: "PASAJERO"
+        // 🔥 Obtener rol desde SelectionActivity
+        role = intent.getStringExtra("USER_ROLE") ?: "PASAJERO"
 
-        initViews()
-        applyRoleLogic()
-        setupTurnoDropdown()
-        setupLoginLink()
+        auth = FirebaseAuth.getInstance()
 
-        btnRegister.setOnClickListener { validateAndRegister() }
+        inputNombre = findViewById(R.id.inputNombre)
+        inputApellido = findViewById(R.id.inputApellido)
+        inputEmail = findViewById(R.id.inputEmail)
+        inputPassword = findViewById(R.id.inputPassword)
+        inputTelefono = findViewById(R.id.inputTelefono)
+        inputDireccion = findViewById(R.id.inputDireccion)
+        inputBus = findViewById(R.id.inputBus)
+        inputTurno = findViewById(R.id.inputTurno)
+
+        imgProfile = findViewById(R.id.imgProfile)
+
+        findViewById<Button>(R.id.btnRegister).setOnClickListener { validate() }
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnPickPhoto)
+            .setOnClickListener { pickImage.launch("image/*") }
+
+        configurarVistaSegunRol()
     }
 
-    private fun initViews() {
-        etNombre = findViewById(R.id.etNombre)
-        etApellido = findViewById(R.id.etApellido)
-        etTelefono = findViewById(R.id.etTelefono)
-        etEmailReg = findViewById(R.id.etEmailReg)
-        etPassReg = findViewById(R.id.etPassReg)
-        etNoBus = findViewById(R.id.etNoBus)
-        atvTurno = findViewById(R.id.atvTurno)
-        layoutConductorFields = findViewById(R.id.layoutConductorFields)
-        tvRegSubtitle = findViewById(R.id.tvRegSubtitle)
-        btnRegister = findViewById(R.id.btnRegister)
-
-    }
-
-    // Colorea "Iniciar Sesión" en verde sin necesidad de HtmlCompat
-    private fun setupLoginLink() {
-        val full = "¿Ya tienes una cuenta? Iniciar Sesión"
-        val spannable = SpannableString(full)
-        val start = full.indexOf("Iniciar Sesión")
-        val green = ContextCompat.getColor(this, R.color.primary_zenda)
-
-        spannable.setSpan(ForegroundColorSpan(green), start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannable.setSpan(StyleSpan(Typeface.BOLD),    start, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-    }
-
-    private fun applyRoleLogic() {
-        if (userRole == "PASAJERO") {
-            // Ocultar campos de conductor
-            layoutConductorFields.visibility = View.GONE
-            tvRegSubtitle.text = "Únete al camino de la tranquilidad, pasajero."
-        } else {
-            layoutConductorFields.visibility = View.VISIBLE
-            tvRegSubtitle.text = "Únete al camino de la tranquilidad, conductor."
+    // 🔥 Oculta campos si es pasajero
+    private fun configurarVistaSegunRol() {
+        if (role == "PASAJERO") {
+            inputBus.visibility = LinearLayout.GONE
+            inputTurno.visibility = LinearLayout.GONE
         }
     }
 
-    private fun validateAndRegister() {
-        val email = etEmailReg.text.toString().trim()
-        val pass = etPassReg.text.toString().trim()
-        val nom = etNombre.text.toString().trim()
-        val bus = etNoBus.text.toString().trim()
+    private fun validate() {
+        clearErrors()
 
-        // Validación base
-        if (nom.isEmpty() || email.isEmpty() || pass.isEmpty()) {
-            toast("Completa los campos obligatorios")
-            return
+        val nombre = findViewById<EditText>(R.id.etNombre).text.toString()
+        val apellido = findViewById<EditText>(R.id.etApellido).text.toString()
+        val email = findViewById<EditText>(R.id.etEmailReg).text.toString()
+        val pass = findViewById<EditText>(R.id.etPassReg).text.toString()
+
+        val telefono = findViewById<EditText>(R.id.etTelefono).text.toString()
+        val direccion = findViewById<EditText>(R.id.etDireccion).text.toString()
+        val bus = findViewById<EditText>(R.id.etBus).text.toString()
+        val turno = findViewById<EditText>(R.id.etTurno).text.toString()
+
+        var valid = true
+
+        if (nombre.length < 2) {
+            inputNombre.error = "Nombre inválido"
+            valid = false
         }
 
-        // Validación específica de rol (Encapsulamiento lógico)
-        if (userRole == "CONDUCTOR" && bus.isEmpty()) {
-            toast("El número de bus es obligatorio para conductores")
-            return
+        if (apellido.length < 2) {
+            inputApellido.error = "Apellido inválido"
+            valid = false
         }
 
-        // Proceder con el registro
-        val userData = User(
-            uid = null,
-            nombre = nom,
-            email = email,
-            noBus = if (userRole == "CONDUCTOR") bus else null,
-            turno = if (userRole == "CONDUCTOR") atvTurno.text.toString() else null,
-            rol = userRole // Asegúrate de añadir el campo 'rol' en tu clase User.kt
-        )
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            inputEmail.error = "Email inválido"
+            valid = false
+        }
 
-        signUp(email, pass, userData)
-    }
+        if (pass.length < 6) {
+            inputPassword.error = "Mínimo 6 caracteres"
+            valid = false
+        }
 
-    private fun signUp(email: String, pass: String, userData: User) {
-        auth.createUserWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
-                saveInDatabase(userId, userData.copy(uid = userId))
-            } else {
-                toast("Error: ${task.exception?.message}")
+        if (telefono.length < 7) {
+            inputTelefono.error = "Teléfono inválido"
+            valid = false
+        }
+
+        if (direccion.isEmpty()) {
+            inputDireccion.error = "Dirección requerida"
+            valid = false
+        }
+
+        // 🔥 Validación solo para conductores
+        if (role == "CONDUCTOR") {
+            if (bus.isEmpty()) {
+                inputBus.error = "Número de bus requerido"
+                valid = false
+            }
+
+            if (turno.isEmpty()) {
+                inputTurno.error = "Turno requerido"
+                valid = false
             }
         }
-    }
 
-    private fun saveInDatabase(uid: String, user: User) {
-        // Guardar bajo el nodo de su respectivo rol para Clean Data
-        val path = if (userRole == "CONDUCTOR") "conductores" else "pasajeros"
-
-        dbRef.child(path).child(uid).setValue(user).addOnSuccessListener {
-            toast("¡$userRole registrado exitosamente!")
-            startActivity(Intent(this, Login::class.java))
-            finish()
+        if (imageUri == null) {
+            Toast.makeText(this, "Sube una foto", Toast.LENGTH_SHORT).show()
+            valid = false
         }
+
+        if (!valid) return
+
+        auth.createUserWithEmailAndPassword(email, pass)
+            .addOnSuccessListener {
+                val uid = auth.currentUser!!.uid
+
+                uploadImage(
+                    uid,
+                    nombre,
+                    apellido,
+                    telefono,
+                    direccion,
+                    email,
+                    bus,
+                    turno
+                )
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
-    private fun toast(m: String) = Toast.makeText(this, m, Toast.LENGTH_SHORT).show()
+    private fun uploadImage(
+        uid: String,
+        nombre: String,
+        apellido: String,
+        telefono: String,
+        direccion: String,
+        email: String,
+        bus: String,
+        turno: String
+    ) {
+        val ref = FirebaseStorage.getInstance().reference.child("profile/$uid.jpg")
 
-    private fun setupTurnoDropdown() {
-        val opciones = listOf("Mañana", "Tarde", "Noche")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, opciones)
-        atvTurno.setAdapter(adapter)
-        atvTurno.setText(opciones[0], false) // valor por defecto sin filtrar
+        ref.putFile(imageUri!!)
+            .continueWithTask { ref.downloadUrl }
+            .addOnSuccessListener { url ->
+
+                val user = User(
+                    uid = uid,
+                    nombre = nombre,
+                    apellido = apellido,
+                    telefono = telefono,
+                    direccion = direccion,
+                    email = email,
+                    noBus = if (role == "CONDUCTOR") bus else "",
+                    turno = if (role == "CONDUCTOR") turno else "",
+                    rol = role
+                )
+
+                FirebaseDatabase.getInstance().reference
+                    .child("users")
+                    .child(uid)
+                    .setValue(user)
+
+                Toast.makeText(this, "Registrado correctamente", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al subir imagen", Toast.LENGTH_SHORT).show()
+            }
     }
 
-
+    private fun clearErrors() {
+        inputNombre.error = null
+        inputApellido.error = null
+        inputEmail.error = null
+        inputPassword.error = null
+        inputTelefono.error = null
+        inputDireccion.error = null
+        inputBus.error = null
+        inputTurno.error = null
+    }
 }
 
 
