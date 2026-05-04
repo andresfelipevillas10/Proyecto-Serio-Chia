@@ -30,14 +30,10 @@ class HomeRutasActivity : AppCompatActivity() {
     private lateinit var btnFollowRoute: MaterialButton
     private lateinit var btnNewRoute: MaterialCardView
     private lateinit var btnReportIncident: MaterialCardView
-    private lateinit var btnBusInfo: MaterialCardView
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var badgeLive: TextView
 
     // Nuevos elementos
-    private lateinit var tvEmptyState: TextView
-    private lateinit var layoutFrecuentes: LinearLayout
-    private lateinit var containerFrecuentes: LinearLayout
     private lateinit var tvStat1Value: TextView
     private lateinit var tvStat2Value: TextView
 
@@ -67,15 +63,9 @@ class HomeRutasActivity : AppCompatActivity() {
 
         btnNewRoute = findViewById(R.id.btnNewRoute)
         btnReportIncident = findViewById(R.id.btnReportIncident)
-        btnBusInfo = findViewById(R.id.btnBusInfo)
 
         bottomNav = findViewById(R.id.bottomNav)
         badgeLive = findViewById(R.id.badgeLive)
-
-        // Inicializar nuevos
-        tvEmptyState = findViewById(R.id.tvEmptyState)
-        layoutFrecuentes = findViewById(R.id.layoutFrecuentes)
-        containerFrecuentes = findViewById(R.id.containerFrecuentes)
 
         // Estadísticas
         val statCard1 = findViewById<MaterialCardView>(R.id.statCard1)
@@ -198,48 +188,11 @@ class HomeRutasActivity : AppCompatActivity() {
     }
 
     private fun updateFrecuentesUI(topRutas: List<Ruta>) {
-        containerFrecuentes.removeAllViews()
-        if (topRutas.isEmpty() || hasActiveRoute) {
-            layoutFrecuentes.visibility = View.GONE
-            return
-        }
-
-        layoutFrecuentes.visibility = View.VISIBLE
-        val inflater = LayoutInflater.from(this)
-
-        for (ruta in topRutas) {
-            val card = inflater.inflate(R.layout.item_route_card, containerFrecuentes, false)
-            card.findViewById<TextView>(R.id.tvRouteName).text = ruta.nombre
-            card.findViewById<TextView>(R.id.tvRouteDetails).text = "${ruta.horaSalida} - ${ruta.horaLlegada}"
-            
-            // Si tiene mas de 5 usos, mostrar badge de FRECUENTE
-            if (ruta.usoCount > 5) {
-                card.findViewById<TextView>(R.id.tvRouteBadge).visibility = View.VISIBLE
-            }
-
-            card.findViewById<MaterialButton>(R.id.btnStartRoute).alpha = 1.0f
-            card.findViewById<MaterialButton>(R.id.btnStartRoute).setOnClickListener {
-                val intent = Intent(this, PreRecorridoActivity::class.java).apply {
-                    putExtra("rutaId", ruta.id)
-                    putExtra("rutaNombre", ruta.nombre)
-                    putExtra("rutaRadio", ruta.radioDeteccion)
-                }
-                startActivity(intent)
-            }
-            
-            card.findViewById<View>(R.id.btnRemoveRoute).visibility = View.GONE
-
-            containerFrecuentes.addView(card)
-        }
+        // Feature removed as per layout
     }
 
     private fun checkEmptyState() {
-        if (!hasActiveRoute && !hasAnyRoutes) {
-            tvEmptyState.visibility = View.VISIBLE
-            layoutFrecuentes.visibility = View.GONE
-        } else {
-            tvEmptyState.visibility = View.GONE
-        }
+        // Feature removed as per layout
     }
 
     private fun setupBottomNav() {
@@ -249,7 +202,7 @@ class HomeRutasActivity : AppCompatActivity() {
                 R.id.nav_home -> true
                 R.id.nav_routes -> {
                     startActivity(Intent(this, ListaRutas::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     })
                     overridePendingTransition(0, 0)
                     true
