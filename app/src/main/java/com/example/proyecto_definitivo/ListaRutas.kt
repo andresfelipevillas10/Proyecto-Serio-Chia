@@ -3,6 +3,8 @@ package com.example.proyecto_definitivo
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageButton
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,27 +16,40 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import java.util.concurrent.TimeUnit
 
-class ListaRutas : AppCompatActivity() {
+class ListaRutas : AppCompatActivity(), RutaSyncManager.SyncCallback {
 
     private lateinit var rvConfigRutas: RecyclerView
     private lateinit var fabAddRoute: ExtendedFloatingActionButton
     private lateinit var btnBackConfig: ImageButton
     private lateinit var bottomNav: BottomNavigationView
+    private lateinit var progressSync: ProgressBar
+    private lateinit var tvSyncStatus: TextView
 
     private val db = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
     private val listaRutas = mutableListOf<Ruta>()
     private lateinit var rutaAdapter: RutaAdapter
+    private lateinit var syncManager: RutaSyncManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_configurar_rutas)
 
+        syncManager = RutaSyncManager(this)
+        syncManager.addSyncCallback(this)
+
         initViews()
         setupBottomNav()
         setupRecyclerView()
-        setupFirebaseListeners()
+        setupSyncUI()
+        
+        // Cargar datos cacheados primero para experiencia offline
+        loadCachedRoutes()
+        
+        // Iniciar sincronización en tiempo real
+        syncManager.startRealtimeSync()
     }
 
     private fun initViews() {
@@ -42,8 +57,11 @@ class ListaRutas : AppCompatActivity() {
         fabAddRoute = findViewById(R.id.fabAddRoute)
         btnBackConfig = findViewById(R.id.btnBackConfig)
         bottomNav = findViewById(R.id.bottomNav)
+        progressSync = findViewById(R.id.progressSync)
+        tvSyncStatus = findViewById(R.id.tvSyncStatus)
 
         btnBackConfig.setOnClickListener {
+            syncManager.cleanup()
             startActivity(Intent(this, HomeRutasActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
             })
@@ -53,6 +71,77 @@ class ListaRutas : AppCompatActivity() {
 
         fabAddRoute.setOnClickListener {
             startActivity(Intent(this, CrearRuta::class.java))
+        }
+    }
+
+    private fun setupSyncUI() {
+        progressSync.visibility = android.view.View.GONE
+        tvSyncStatus.text = getString(R.string.sync_status_idle)
+    }
+
+    private fun loadCachedRoutes() {
+        val cachedRoutes = syncManager.getCachedRoutes()
+        if (cachedRoutes.isNotEmpty()) {
+            listaRutas.clear()
+            listaRutas.addAll(cachedRoutes)
+            listaRutas.sortByDescending { it.creadaEn }
+            rutaAdapter.notifyDataSetChanged()
+            
+            val lastSync = syncManager.getLastSyncTime()
+            if (lastSync > 0) {
+                val timeAgo = System.currentTimeMillis() - lastSync
+                val minutesAgo = TimeUnit.MILLISECONDS.toMinutes(timeAgo)
+                tvSyncStatus.text = getString(R.string.sync_status_cached, minutesAgo)
+            }
+        }
+    }
+
+    // Implementación de SyncCallback
+    override fun onSyncStarted() {
+        runOnUiThread {
+            progressSync.visibility = android.view.View.VISIBLE
+            tvSyncStatus.text = getString(R.string.sync_status_syncing)
+        }
+    }
+
+    override fun onSyncCompleted(routes: List<Ruta>) {
+        runOnUiThread {
+            progressSync.visibility = android.view.View.GONE
+            tvSyncStatus.text = getString(R.string.sync_status_success)
+            
+            listaRutas.clear()
+            listaRutas.addAll(routes)
+            listaRutas.sortByDescending { it.creadaEn }
+            rutaAdapter.notifyDataSetChanged()
+            
+            if (routes.isEmpty()) {
+                Toast.makeText(this, getString(R.string.no_routes_yet), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onSyncFailed(error: String) {
+        runOnUiThread {
+            progressSync.visibility = android.view.View.GONE
+            tvSyncStatus.text = getString(R.string.sync_status_failed)
+            Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onSyncStatusChanged(status: RutaSyncManager.SyncStatus) {
+        runOnUiThread {
+            when (status) {
+                RutaSyncManager.SyncStatus.OFFLINE -> {
+                    tvSyncStatus.text = getString(R.string.sync_status_offline)
+                }
+                RutaSyncManager.SyncStatus.SUCCESS -> {
+                    tvSyncStatus.text = getString(R.string.sync_status_success)
+                }
+                RutaSyncManager.SyncStatus.FAILED -> {
+                    tvSyncStatus.text = getString(R.string.sync_status_failed)
+                }
+                else -> {}
+            }
         }
     }
 
@@ -98,6 +187,21 @@ class ListaRutas : AppCompatActivity() {
                     putExtra("rutaRadio", rutaAIniciar.radioDeteccion)
                 }
                 startActivity(intent)
+            },
+            onPinClick = { ruta ->
+                val isPinned = FrecuentesManager.isPinned(this, ruta.id)
+                if (isPinned) {
+                    FrecuentesManager.unpinRoute(this, ruta.id)
+                    Toast.makeText(this, "★ Ruta desfijada", Toast.LENGTH_SHORT).show()
+                } else {
+                    val success = FrecuentesManager.pinRoute(this, ruta)
+                    if (success) {
+                        Toast.makeText(this, "★ Ruta fijada como frecuente", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Máximo 3 rutas fijadas", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                rutaAdapter.notifyDataSetChanged()
             }
         )
         rvConfigRutas.adapter = rutaAdapter

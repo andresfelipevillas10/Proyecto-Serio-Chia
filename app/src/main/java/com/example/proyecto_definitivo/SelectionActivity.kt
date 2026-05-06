@@ -31,8 +31,6 @@ class SelectionActivity : AppCompatActivity() {
         val intent = Intent(this, Register::class.java).apply {
             putExtra("USER_ROLE", role)
         }
-
         startActivity(intent)
-        finish() // 🔥 evita volver atrás
     }
 }

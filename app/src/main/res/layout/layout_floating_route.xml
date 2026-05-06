@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout de la ventana flotante que muestra la ruta activa minimizada.
+     Diseñada para mínima distracción: compacta, con botones grandes (seguridad vial). -->
+<com.google.android.material.card.MaterialCardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/cardFloating"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="12dp"
+        app:cardBackgroundColor="#1A1C22">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+        <!-- Header: EN VIVO + Botón cerrar -->
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            <TextView
+                    android:id="@+id/tvFloatingBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● EN VIVO"
+                    android:background="@drawable/bg_live_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp"
+                    android:textColor="@color/primary_zenda"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:layout_centerVertical="true"/>
+
+            <ImageButton
+                    android:id="@+id/btnFloatingClose"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_close"
+                    app:tint="#AAAAAA"
+                    android:contentDescription="Cerrar miniatura"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"/>
+        </RelativeLayout>
+
+        <!-- Nombre de la ruta -->
+        <TextView
+                android:id="@+id/tvFloatingRouteName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Expreso Chía-Norte"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="6dp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+        <!-- Barra de progreso -->
+        <ProgressBar
+                android:id="@+id/progressFloating"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:progress="50"
+                android:progressDrawable="@drawable/custom_progress_bar"
+                android:layout_marginTop="8dp"/>
+
+        <!-- Info: paradas y progreso -->
+        <TextView
+                android:id="@+id/tvFloatingProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="3/6 paradas"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"/>
+
+        <!-- Botón grande para maximizar -->
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFloatingMaximize"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:text="REANUDAR NAVEGACIÓN"
+                android:textAllCaps="true"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                app:icon="@drawable/ic_navigation"
+                app:iconGravity="textStart"
+                app:cornerRadius="100dp"
+                app:backgroundTint="@color/primary_zenda"/>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

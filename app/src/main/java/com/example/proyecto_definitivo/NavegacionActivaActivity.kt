@@ -4,438 +4,322 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.location.Location
 import android.os.Bundle
-import android.os.Looper
+import android.provider.Settings
+import android.util.Log
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.GoogleMap.CameraPerspective
+import com.google.android.libraries.navigation.ArrivalEvent
+import com.google.android.libraries.navigation.DisplayOptions
+import com.google.android.libraries.navigation.NavigationApi
+import com.google.android.libraries.navigation.Navigator
+import com.google.android.libraries.navigation.RoutingOptions
+import com.google.android.libraries.navigation.SupportNavigationFragment
+import com.google.android.libraries.navigation.Waypoint
+
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
+/**
+ * Pantalla de Navegación Profesional usando Google Maps Navigation SDK.
+ *
+ * Proporciona la experiencia completa de Google Maps (vista 3D, recálculo automático,
+ * guía paso a paso) integrada directamente en la aplicación.
+ */
+class NavegacionActivaActivity : AppCompatActivity() {
 
+    private val TAG = "NavegacionPro"
 
-class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
+    // Vistas
+    private lateinit var navFragment: SupportNavigationFragment
+    private var googleMap: GoogleMap? = null
+    private var navigator: Navigator? = null
 
-    // Vistas de la interfaz moderna
-    private lateinit var mapNavegacion: GoogleMap
-    private var pathPolyline: Polyline? = null
-    private var plannedRoutePolyline: Polyline? = null
-    private val visitedPoints = mutableListOf<LatLng>()
     private lateinit var tvActiveNextStop: TextView
     private lateinit var tvActiveDistance: TextView
     private lateinit var tvActiveTime: TextView
-    private lateinit var tvActiveSpeed: TextView
     private lateinit var btnEndRoute: MaterialButton
     private lateinit var btnSafetyExit: MaterialButton
     private lateinit var fabReportarNovedad: FloatingActionButton
+    private lateinit var fabPausarRuta: FloatingActionButton
 
     // Variables de Ruta
     private val db = FirebaseDatabase.getInstance().reference
     private var rutaId: String = ""
-    private var recorridoId: String = "" // ¡IMPORTANTE! El que recibimos del Pre-Recorrido
-    private var rutaRadio: Float = 30f // Metros para detectar llegada
+    private var recorridoId: String = ""
+    private var rutaRadio: Float = 30f
 
     // Lógica de tracking
     private val listaPuntos = mutableListOf<PuntoRuta>()
     private var indicePuntoActual = 0
-    private var conteoConfirmacionLlegada = 0
-    private var tiempoUltimoPunto: Long = 0L
     private var tiempoInicioRuta: Long = 0L
-
-    // Google Location API
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationRequest: LocationRequest
-    private lateinit var locationCallback: LocationCallback
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_navegacion_activa) // EL DISEÑO MODERNO
+        setContentView(R.layout.activity_navegacion_activa)
 
-        // 1. Enlazar Vistas
+        initViews()
+        receiveIntentData()
+        setupNavigationSDK()
+        setupBackPressHandler()
+
+        tiempoInicioRuta = System.currentTimeMillis()
+    }
+
+    private fun initViews() {
         tvActiveNextStop = findViewById(R.id.tvActiveNextStop)
         tvActiveDistance = findViewById(R.id.tvActiveDistance)
         tvActiveTime = findViewById(R.id.tvActiveTime)
-        tvActiveSpeed = findViewById(R.id.tvActiveSpeed)
         btnEndRoute = findViewById(R.id.btnEndRoute)
         btnSafetyExit = findViewById(R.id.btnSafetyExit)
         fabReportarNovedad = findViewById(R.id.fabReportarNovedad)
+        fabPausarRuta = findViewById(R.id.fabPausarRuta)
 
-        // 2. Recibir Datos
+        btnEndRoute.setOnClickListener { solicitarMotivoFinalizacion(false) }
+        btnSafetyExit.setOnClickListener { mostrarAlertaSeguridad() }
+        fabPausarRuta.setOnClickListener { togglePausa() }
+    }
+
+    private fun receiveIntentData() {
         rutaId = intent.getStringExtra("rutaId") ?: ""
-        recorridoId = intent.getStringExtra("recorridoId") ?: "" // Recibimos el ID del registro en BD
+        recorridoId = intent.getStringExtra("recorridoId") ?: ""
         rutaRadio = intent.getFloatExtra("rutaRadio", 30f)
-
-        // 3. Configurar Mapa
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.mapNavegacion) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
-        // 4. Configurar Botones
-        btnEndRoute.setOnClickListener {
-            solicitarClaveFinalizacion()
-        }
-
-        btnSafetyExit.setOnClickListener {
-            mostrarAlertaSeguridad()
-        }
-
-        fabReportarNovedad.setOnClickListener {
-            Toast.makeText(this, "Novedad registrada (En desarrollo)", Toast.LENGTH_SHORT).show()
-        }
-
-        // MODO TEST: Al mantener presionado el nombre de la parada, simulamos llegada
-        tvActiveNextStop.setOnLongClickListener {
-            if (indicePuntoActual < listaPuntos.size) {
-                val punto = listaPuntos[indicePuntoActual]
-                registrarLlegadaEnFirebase(punto)
-                Toast.makeText(this, "[TEST] Llegada simulada a ${punto.nombre}", Toast.LENGTH_SHORT).show()
-                indicePuntoActual++
-                if (indicePuntoActual < listaPuntos.size) {
-                    actualizarTarjetaProximaParada(null)
-                } else {
-                    tvActiveNextStop.text = getString(R.string.route_completed)
-                    finalizarRecorrido(esAutomatico = true)
-                }
-            }
-            true
-        }
-
-        // 5. Configurar GPS
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        configurarMotorUbicacion()
-
-        tiempoInicioRuta = System.currentTimeMillis()
-        tiempoUltimoPunto = tiempoInicioRuta // Inicia el reloj
     }
 
-    override fun onMapReady(map: GoogleMap) {
-        mapNavegacion = map
-
-        // Configuraciones de conducción
-        mapNavegacion.uiSettings.isZoomControlsEnabled = false
-        mapNavegacion.uiSettings.isCompassEnabled = true
-        mapNavegacion.setPadding(0, 300, 0, 0) // Bajamos el centro del mapa para que no lo tape la tarjeta superior
-
-        // Inicializar el Polyline del recorrido real
-        pathPolyline = mapNavegacion.addPolyline(
-            PolylineOptions()
-                .color(Color.BLUE)
-                .width(12f)
-                .jointType(JointType.ROUND)
-                .startCap(RoundCap())
-                .endCap(RoundCap())
-        )
-
-        habilitarCapaUbicacion()
-        cargarPuntosRuta()
-    }
-
-    private fun cargarPuntosRuta() {
-        if (rutaId.isEmpty()) return
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        // Primero obtenemos los puntos de la ruta
-        db.child("rutas").child(currentUserId).child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
-            listaPuntos.clear()
-            for (puntoSnap in snapshot.children) {
-                val punto = puntoSnap.getValue(PuntoRuta::class.java)
-                punto?.let { listaPuntos.add(it) }
-            }
-            listaPuntos.sortBy { it.orden }
-
-            // Luego intentamos recuperar el progreso guardado
-            db.child("users").child(currentUserId).child("ruta_actual").child("puntos_completados").get()
-                .addOnSuccessListener { progSnap ->
-                    indicePuntoActual = progSnap.getValue(Int::class.java) ?: 0
-
-                    dibujarPuntos()
-                    actualizarTarjetaProximaParada(null) // Inicializa la tarjeta con el punto que toca
-                }
-                .addOnFailureListener {
-                    dibujarPuntos()
-                    actualizarTarjetaProximaParada(null)
-                }
-        }
-    }
-
-    private fun dibujarPuntos() {
-        mapNavegacion.clear()
-
-        // 1. Dibujar la línea de la ruta planeada
-        val polylineOptions = PolylineOptions()
-            .color(Color.GRAY)
-            .width(10f)
-            .pattern(listOf(Dash(20f), Gap(10f))) // Línea punteada para diferenciar
-
-        for (punto in listaPuntos) {
-            polylineOptions.add(LatLng(punto.latitud, punto.longitud))
-        }
-        plannedRoutePolyline = mapNavegacion.addPolyline(polylineOptions)
-
-        // 2. Dibujar Marcadores
-        for (punto in listaPuntos) {
-            val posicion = LatLng(punto.latitud, punto.longitud)
-            val colorMarcador = when (punto.Tipo) {
-                "origen" -> BitmapDescriptorFactory.HUE_GREEN
-                "fin" -> BitmapDescriptorFactory.HUE_RED
-                else -> BitmapDescriptorFactory.HUE_AZURE
-            }
-            mapNavegacion.addMarker(MarkerOptions()
-                .position(posicion)
-                .title(punto.nombre)
-                .icon(BitmapDescriptorFactory.defaultMarker(colorMarcador)))
+    /**
+     * Inicializa el Navigation SDK de Google Maps.
+     */
+    private fun setupNavigationSDK() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
+            return
         }
 
-        // 3. Restaurar la línea de recorrido real (traveled path)
-        pathPolyline = mapNavegacion.addPolyline(
-            PolylineOptions()
-                .addAll(visitedPoints)
-                .color(Color.BLUE)
-                .width(12f)
-                .jointType(JointType.ROUND)
-                .startCap(RoundCap())
-                .endCap(RoundCap())
-        )
-    }
+        // 1. Obtener el fragmento de navegación
+        navFragment = supportFragmentManager.findFragmentById(R.id.mapNavegacion) as SupportNavigationFragment
 
-    private fun configurarMotorUbicacion() {
-        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L).apply {
-            setMinUpdateIntervalMillis(2000L)
-            // --- ¡NUEVO! ---
-            setMinUpdateDistanceMeters(3f) // Solo actualiza si me moví al menos 3 metros reales
-        }.build()
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                for (location in locationResult.locations) {
-                    procesarUbicacion(location)
-                }
+        // 2. Mostrar T&C requeridos por Google
+        NavigationApi.showTermsAndConditionsDialog(this, "my_company", "Zenda") { accepted ->
+            if (accepted) {
+                initializeNavigationApi()
+            } else {
+                Toast.makeText(this, "Debes aceptar los términos para navegar", Toast.LENGTH_LONG).show()
+                finish()
             }
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun habilitarCapaUbicacion() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mapNavegacion.isMyLocationEnabled = true
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-        } else {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
-        }
-    }
+    private fun initializeNavigationApi() {
+        NavigationApi.getNavigator(this, object : NavigationApi.NavigatorListener {
+            override fun onNavigatorReady(nav: Navigator) {
+                navigator = nav
+                setupNavigator()
 
-    private fun procesarUbicacion(location: Location) {
-        // --- ¡FILTRO ANTI-SALTOS MEJORADO! ---
-        // Si el error es mayor a 15 metros, ignoramos este dato.
-        if (location.hasAccuracy() && location.accuracy > 15f) {
-            return
-        }
-        // 1. Centrar cámara en el conductor
-        val posicionActual = LatLng(location.latitude, location.longitude)
-        mapNavegacion.animateCamera(CameraUpdateFactory.newLatLngZoom(posicionActual, 18f))
-
-        // --- NUEVO: Actualizar la línea de recorrido ---
-        if (visitedPoints.isEmpty() || visitedPoints.last() != posicionActual) {
-            visitedPoints.add(posicionActual)
-
-            if (pathPolyline == null) {
-                pathPolyline = mapNavegacion.addPolyline(
-                    PolylineOptions()
-                        .addAll(visitedPoints)
-                        .color(Color.BLUE)
-                        .width(12f)
-                        .jointType(JointType.ROUND)
-                        .startCap(RoundCap())
-                        .endCap(RoundCap())
-                )
-            } else {
-                pathPolyline?.points = visitedPoints
-            }
-        }
-
-        // --- NUEVO: Actualizar posición en tiempo real en Firebase ---
-        if (recorridoId.isNotEmpty()) {
-            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-            db.child("recorridos").child(currentUserId).child(recorridoId).updateChildren(mapOf(
-                "latitudActual" to location.latitude,
-                "longitudActual" to location.longitude
-            ))
-        }
-
-        // 2. Actualizar Velocímetro
-        val velocidadKmH = (location.speed * 3.6).toInt() // Convertir m/s a km/h
-        tvActiveSpeed.text = velocidadKmH.toString()
-
-        // 3. Lógica de Paradas
-        if (indicePuntoActual >= listaPuntos.size) return
-
-        val puntoEsperado = listaPuntos[indicePuntoActual]
-        val resultados = FloatArray(1)
-        Location.distanceBetween(location.latitude, location.longitude, puntoEsperado.latitud, puntoEsperado.longitud, resultados)
-        val distanciaMetros = resultados[0]
-
-        // Actualizar UI con la distancia restante cada que nos movemos
-        actualizarTarjetaProximaParada(distanciaMetros)
-
-        // 4. ¿Llegamos al punto? (Lógica de Doble Confirmación)
-        if (distanciaMetros <= rutaRadio) {
-            conteoConfirmacionLlegada++
-
-            if (conteoConfirmacionLlegada >= 2) {
-                conteoConfirmacionLlegada = 0
-                registrarLlegadaEnFirebase(puntoEsperado)
-                Toast.makeText(this, getString(R.string.arrived_at, puntoEsperado.nombre), Toast.LENGTH_SHORT).show()
-                indicePuntoActual++
-
-                if (indicePuntoActual < listaPuntos.size) {
-                    actualizarTarjetaProximaParada(null) // Prepara el siguiente
-                } else {
-                    tvActiveNextStop.text = getString(R.string.route_completed)
-                    tvActiveDistance.text = "0m"
-                    finalizarRecorrido(esAutomatico = true)
+                navFragment.getMapAsync { map ->
+                    googleMap = map
+                    setupMapUI()
+                    cargarPuntosRutaYEmpezar()
                 }
             }
-        } else {
-            conteoConfirmacionLlegada = 0 // Reset si nos alejamos
+
+            override fun onError(@NavigationApi.ErrorCode errorCode: Int) {
+                Log.e(TAG, "Error inicializando Navigator: $errorCode")
+                Toast.makeText(this@NavegacionActivaActivity, "Error de Navegación: $errorCode", Toast.LENGTH_LONG).show()
+            }
+        })
+    }
+
+    private fun setupNavigator() {
+        navigator?.let { nav ->
+            nav.setAudioGuidance(Navigator.AudioGuidance.VOICE_ALERTS_AND_GUIDANCE)
+
+            // Listener para cuando llegamos a un waypoint (parada)
+            nav.addArrivalListener(object : Navigator.ArrivalListener {
+                override fun onArrival(event: ArrivalEvent) {
+                    val waypointTitle = event.waypoint?.title ?: return
+                    val punto = listaPuntos.find { it.id == waypointTitle }
+                    punto?.let { registrarLlegadaEnFirebase(it) }
+
+                    indicePuntoActual++
+                    if (indicePuntoActual < listaPuntos.size) {
+                        actualizarUIProximaParada()
+                        // Continuar al siguiente punto
+                        nav.continueToNextDestination()
+                    } else {
+                        tvActiveNextStop.text = "Ruta completada"
+                        solicitarMotivoFinalizacion(true)
+                    }
+                }
+            })
+
+            nav.addRemainingTimeOrDistanceChangedListener(30, 100, object : Navigator.RemainingTimeOrDistanceChangedListener {
+                override fun onRemainingTimeOrDistanceChanged() {
+                    // Actualizar UI extra si es necesario
+                }
+            })
         }
     }
 
-    private fun actualizarTarjetaProximaParada(distanciaAproximada: Float?) {
-        if (indicePuntoActual < listaPuntos.size) {
-            val siguientePunto = listaPuntos[indicePuntoActual]
-            tvActiveNextStop.text = siguientePunto.nombre
+    @SuppressLint("MissingPermission")
+    private fun setupMapUI() {
+        googleMap?.apply {
+            uiSettings.isZoomControlsEnabled = false
+            setPadding(0, 0, 0, 600)
+            followMyLocation(CameraPerspective.TILTED)
+        }
+    }
 
-            if (distanciaAproximada != null) {
-                tvActiveDistance.text = "${distanciaAproximada.toInt()}m"
-                // Calculo simple de tiempo: asumiendo 30km/h (8.3 m/s)
-                val segundos = distanciaAproximada / 8.3f
-                val minutos = (segundos / 60).toInt()
-                tvActiveTime.text = if (minutos < 1) getString(R.string.approx_one_min) else getString(R.string.approx_min_format, minutos)
-            } else {
-                tvActiveDistance.text = "--"
-                tvActiveTime.text = getString(R.string.calculating)
+    private fun cargarPuntosRutaYEmpezar() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.child("rutas").child(currentUserId).child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
+            listaPuntos.clear()
+            val waypoints = mutableListOf<Waypoint>()
+            
+            for (puntoSnap in snapshot.children) {
+                val punto = puntoSnap.getValue(PuntoRuta::class.java)
+                punto?.let { 
+                    listaPuntos.add(it)
+                    val wp = Waypoint.builder()
+                        .setLatLng(it.latitud, it.longitud)
+                        .setTitle(it.id) // Usamos el ID para identificarlo
+                        .build()
+                    waypoints.add(wp)
+                }
             }
+            listaPuntos.sortBy { it.orden }
+            
+            if (waypoints.isNotEmpty()) {
+                iniciarNavegacionGoogle(waypoints)
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun iniciarNavegacionGoogle(waypoints: List<Waypoint>) {
+        navigator?.let { nav ->
+            val routingOptions = RoutingOptions().apply {
+                travelMode(RoutingOptions.TravelMode.DRIVING)
+            }
+
+            nav.setDestinations(waypoints, routingOptions, DisplayOptions())
+                .setOnResultListener { routeStatus ->
+                    if (routeStatus == Navigator.RouteStatus.OK) {
+                        nav.startGuidance()
+                        actualizarUIProximaParada()
+                    } else {
+                        Log.e(TAG, "Error al establecer destinos: $routeStatus")
+                    }
+                }
+        }
+    }
+
+    private fun actualizarUIProximaParada() {
+        if (indicePuntoActual < listaPuntos.size) {
+            val siguiente = listaPuntos[indicePuntoActual]
+            tvActiveNextStop.text = siguiente.nombre
         }
     }
 
     private fun registrarLlegadaEnFirebase(punto: PuntoRuta) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        if (recorridoId.isEmpty()) return
-
         val ahora = System.currentTimeMillis()
-        val tiempoDesdeAnterior = ahora - tiempoUltimoPunto
-        val tiempoAcumulado = ahora - tiempoInicioRuta
-
-        // Guardamos el registro del punto con toda la data para el resumen
+        
         val puntoRegistrado = mapOf(
             "puntoId" to punto.id,
             "nombre" to punto.nombre,
-            "orden" to punto.orden,
-            "tipo" to punto.Tipo,
-            "latitud" to punto.latitud,
-            "longitud" to punto.longitud,
             "tiempoLlegada" to ahora,
-            "tiempoDesdeAnteriorMs" to tiempoDesdeAnterior,
-            "tiempoAcumuladoRutaMs" to tiempoAcumulado
+            "estado" to "completado"
         )
 
         db.child("recorridos").child(currentUserId).child(recorridoId).child("puntosRegistrados").child(punto.id).setValue(puntoRegistrado)
-
-        // Actualizar progreso en el perfil del usuario para el Hub
         db.child("users").child(currentUserId).child("ruta_actual").child("puntos_completados").setValue(indicePuntoActual + 1)
-
-        tiempoUltimoPunto = ahora
+        
+        Toast.makeText(this, "Llegada a: ${punto.nombre}", Toast.LENGTH_SHORT).show()
     }
 
-    private fun solicitarClaveFinalizacion() {
-        val editText = EditText(this).apply { hint = getString(R.string.enter_key_hint) }
+    private fun togglePausa() {
+        val isNavigating = navigator?.isGuidanceRunning ?: false
+        if (isNavigating) {
+            navigator?.stopGuidance()
+            fabPausarRuta.setImageResource(android.R.drawable.ic_media_play)
+            Toast.makeText(this, "Navegación en pausa", Toast.LENGTH_SHORT).show()
+        } else {
+            navigator?.startGuidance()
+            fabPausarRuta.setImageResource(android.R.drawable.ic_media_pause)
+            Toast.makeText(this, "Navegación reanudada", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun solicitarMotivoFinalizacion(esAutomatico: Boolean) {
+        val editText = EditText(this).apply { hint = "Justificación" }
         AlertDialog.Builder(this)
-            .setTitle(R.string.finish_route_title)
-            .setMessage(R.string.enter_master_key)
+            .setTitle("Finalizar Ruta")
             .setView(editText)
-            .setPositiveButton(R.string.validate) { _, _ ->
-                if (editText.text.toString().trim() == "1234") { // Usa tu Constante aquí
-                    finalizarRecorrido(esAutomatico = false)
-                } else {
-                    Toast.makeText(this, getString(R.string.wrong_key), Toast.LENGTH_SHORT).show()
-                }
+            .setPositiveButton("Terminar") { _, _ ->
+                finalizarRuta(esAutomatico, editText.text.toString())
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    private fun mostrarAlertaSeguridad() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.safety_alert_title)
-            .setMessage(R.string.safety_alert_message)
-            .setPositiveButton(R.string.safety_exit_confirm) { _, _ ->
-                // Al salir por seguridad, NO cancelamos la ruta. Solo volvemos al Hub.
-                salirSeguridad()
-            }
-            .setNegativeButton(R.string.back_to_route, null)
-            .setIcon(android.R.drawable.ic_dialog_alert)
-            .show()
-    }
-
-    private fun salirSeguridad() {
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+    private fun finalizarRuta(esAutomatico: Boolean, motivo: String) {
+        navigator?.stopGuidance()
+        navigator?.clearDestinations()
         
-        // NO eliminamos ruta_actual de Firebase. 
-        // NO cambiamos el estado del recorrido.
-        // De esta forma, el Hub seguirá mostrando "Seguir Ruta".
-
-        Toast.makeText(this, getString(R.string.nav_minimized_safety), Toast.LENGTH_SHORT).show()
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val actualizacion = mapOf(
+            "finTiempo" to System.currentTimeMillis(),
+            "estado" to if (esAutomatico) "finalizado_auto" else "finalizado_manual",
+            "motivoTermino" to motivo
+        )
+        
+        db.child("recorridos").child(currentUserId).child(recorridoId).updateChildren(actualizacion)
+        db.child("users").child(currentUserId).child("ruta_actual").removeValue()
+        
+        startActivity(Intent(this, ResumenRecorridoActivity::class.java).apply {
+            putExtra("recorridoId", recorridoId)
+        })
         finish()
     }
 
-    private fun finalizarRecorrido(esAutomatico: Boolean) {
-        fusedLocationClient.removeLocationUpdates(locationCallback) // Apagar GPS
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    private fun mostrarAlertaSeguridad() {
+        AlertDialog.Builder(this)
+            .setTitle("Salir al Hub")
+            .setMessage("¿Deseas minimizar la navegación?")
+            .setPositiveButton("Sí, Salir") { _, _ -> finish() }
+            .setNegativeButton("Volver", null)
+            .show()
+    }
 
-        if (recorridoId.isNotEmpty()) {
-            val finTiempo = System.currentTimeMillis()
-            val estadoFinal = if (esAutomatico) "finalizado_automatico" else "finalizado_manual"
-            val actualizacion = mapOf(
-                "finTiempo" to finTiempo,
-                "tiempoTotalMs" to (finTiempo - tiempoInicioRuta),
-                "estado" to estadoFinal
-            )
-            db.child("recorridos").child(currentUserId).child(recorridoId).updateChildren(actualizacion).addOnSuccessListener {
-                // Limpiar ruta activa del perfil
-                db.child("users").child(currentUserId).child("ruta_actual").removeValue()
-
-                Toast.makeText(this, getString(R.string.route_finished), Toast.LENGTH_SHORT).show()
-
-                // Lanzamos la pantalla de Resumen Final pasándole el ID del recorrido
-                val intent = Intent(this, ResumenRecorridoActivity::class.java)
-                intent.putExtra("recorridoId", recorridoId)
-                startActivity(intent)
-
-                finish() // Ahora sí cerramos la navegación
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (Settings.canDrawOverlays(this@NavegacionActivaActivity)) {
+                    val serviceIntent = Intent(this@NavegacionActivaActivity, FloatingRouteService::class.java).apply {
+                        putExtra("rutaId", rutaId)
+                        putExtra("rutaNombre", intent.getStringExtra("rutaNombre"))
+                        putExtra("recorridoId", recorridoId)
+                    }
+                    startForegroundService(serviceIntent)
+                    finish()
+                } else {
+                    mostrarAlertaSeguridad()
+                }
             }
-        } else {
-            if (currentUserId != null) {
-                db.child("users").child(currentUserId).child("ruta_actual").removeValue()
-            }
-            finish()
-        }
+        })
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::fusedLocationClient.isInitialized) {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-        }
+        navigator?.cleanup()
     }
 }

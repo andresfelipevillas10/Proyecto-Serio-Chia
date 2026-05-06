@@ -9,7 +9,7 @@
 
     <androidx.fragment.app.FragmentContainerView
             android:id="@+id/mapNavegacion"
-            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:name="com.google.android.libraries.navigation.SupportNavigationFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
@@ -24,7 +24,8 @@
             app:cardBackgroundColor="#F2FFFFFF"
             app:strokeWidth="1dp"
             app:strokeColor="#33c3c6d1"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintBottom_toTopOf="@id/bottomNavContainer"
+            android:layout_marginBottom="16dp">
 
         <LinearLayout
                 android:layout_width="match_parent"
@@ -107,59 +108,7 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardSpeed"
-            android:layout_width="90dp"
-            android:layout_height="90dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="#F2FFFFFF"
-            app:layout_constraintBottom_toTopOf="@id/bottomNavContainer"
-            app:layout_constraintStart_toStartOf="parent">
 
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="8dp">
-
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="VELOCIDAD"
-                    android:textColor="#737780"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-            <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:baselineAligned="true">
-
-                <TextView
-                        android:id="@+id/tvActiveSpeed"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="40"
-                        android:textColor="#001e40"
-                        android:textSize="32sp"
-                        android:textStyle="bold" />
-
-                <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:text="km/h"
-                        android:textColor="#737780"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabReportarNovedad"
@@ -172,10 +121,11 @@
             app:backgroundTint="#F29900"
             app:elevation="8dp"
             app:fabSize="normal"
-            app:layout_constraintBottom_toTopOf="@id/bottomNavContainer"
+            app:layout_constraintBottom_toTopOf="@id/cardNextStop"
             app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
+            android:id="@+id/tvReportarLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Reportar"
@@ -189,6 +139,36 @@
             app:layout_constraintBottom_toTopOf="@id/fabReportarNovedad"
             app:layout_constraintEnd_toEndOf="@id/fabReportarNovedad"
             app:layout_constraintStart_toStartOf="@id/fabReportarNovedad" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabPausarRuta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="24dp"
+            android:src="@drawable/ic_pause"
+            app:tint="#FFFFFF"
+            app:backgroundTint="#006c49"
+            app:elevation="8dp"
+            app:fabSize="normal"
+            app:layout_constraintBottom_toTopOf="@id/cardNextStop"
+            app:layout_constraintEnd_toStartOf="@id/fabReportarNovedad" />
+
+    <TextView
+            android:id="@+id/tvPausarLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pausar"
+            android:textColor="#001e40"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_white_rounded_small"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:layout_marginBottom="4dp"
+            app:layout_constraintBottom_toTopOf="@id/fabPausarRuta"
+            app:layout_constraintEnd_toEndOf="@id/fabPausarRuta"
+            app:layout_constraintStart_toStartOf="@id/fabPausarRuta" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/bottomNavContainer"

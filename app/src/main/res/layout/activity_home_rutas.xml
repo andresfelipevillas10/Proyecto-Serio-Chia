@@ -239,6 +239,50 @@
                         android:layout_marginStart="8dp"/>
             </LinearLayout>
 
+            <!-- ── Sección Rutas Frecuentes ── -->
+            <LinearLayout
+                    android:id="@+id/sectionFrecuentes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Rutas frecuentes"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_main"
+                        android:layout_marginBottom="10dp"/>
+
+                <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:clipToPadding="false">
+
+                    <LinearLayout
+                            android:id="@+id/containerFrecuentes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"/>
+                </HorizontalScrollView>
+            </LinearLayout>
+
+            <!-- Hint cuando no hay frecuentes -->
+            <TextView
+                    android:id="@+id/tvFrecuentesHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Fija tus rutas más usadas con ★ desde la lista de rutas"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_hint"
+                    android:textAlignment="center"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"/>
+
             <!-- ── Botón Crear Nueva Ruta ── -->
             <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnNewRoute"

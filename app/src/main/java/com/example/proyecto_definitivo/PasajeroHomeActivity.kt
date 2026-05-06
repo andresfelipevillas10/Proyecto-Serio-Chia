@@ -50,10 +50,19 @@ class PasajeroHomeActivity : AppCompatActivity() {
 
     private fun loadPassengerName() {
         val uid = auth.currentUser?.uid ?: return
-        db.child("users").child("pasajeros").child(uid).child("nombre")
+        db.child("pasajeros").child(uid).child("nombre")
             .get().addOnSuccessListener { snapshot ->
-                val nombre = snapshot.getValue(String::class.java) ?: "Pasajero"
-                tvGreeting.text = getString(R.string.hello_user, nombre)
+                val nombre = snapshot.getValue(String::class.java)
+
+                if (!nombre.isNullOrBlank()) {
+                    tvGreeting.text = getString(R.string.hello_user, nombre)
+                } else {
+                    db.child("users").child(uid).child("nombre")
+                        .get().addOnSuccessListener { fallbackSnapshot ->
+                            val fallbackName = fallbackSnapshot.getValue(String::class.java) ?: "Pasajero"
+                            tvGreeting.text = getString(R.string.hello_user, fallbackName)
+                        }
+                }
             }
     }
 

@@ -110,4 +110,24 @@
     <string name="safety_alert_message">¿Desea salir al Hub principal?\n\nLa ruta seguirá activa y podrá retomarla más tarde.\n\nRecuerde mantener las MANOS AL VOLANTE y solo manipular el teléfono cuando el vehículo esté detenido.</string>
     <string name="safety_exit_confirm">SÍ, SALIR AL HUB</string>
     <string name="back_to_route">VOLVER A LA RUTA</string>
+    <string name="sync_status_idle">Esperando...</string>
+    <string name="sync_status_syncing">Sincronizando...</string>
+    <string name="sync_status_success">Sincronización exitosa</string>
+    <string name="sync_status_failed">Sincronización fallida</string>
+    <string name="sync_status_offline">Modo sin conexión</string>
+    <string name="sync_status_cached">Sincronizado hace %1$d min (Caché)</string>
+    <string name="back_with_active_route">Ruta activa en curso. La miniatura seguirá visible.</string>
+    <string name="frequent_routes_title">Rutas frecuentes</string>
+    <string name="frequent_routes_hint">Fija tus rutas más usadas con ★ desde la lista de rutas</string>
+    <string name="route_shortcut_start">Iniciar</string>
+    <string name="shortcut_removed">Atajo eliminado</string>
+    <string name="max_pinned_reached">Máximo 3 rutas fijadas</string>
+    <string name="route_pinned">★ Ruta fijada como frecuente</string>
+    <string name="route_unpinned">★ Ruta desfijada</string>
+
+    <string-array name="turnos_conductor">
+        <item>Mañana</item>
+        <item>Tarde</item>
+        <item>Noche</item>
+    </string-array>
 </resources>

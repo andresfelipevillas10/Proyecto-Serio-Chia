@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chip de atajo de ruta frecuente para el HorizontalScrollView del Home.
+     Mínimo 80dp de alto para fácil interacción en conducción. -->
+<com.google.android.material.card.MaterialCardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/cardFrecuente"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1Ac3c6d1">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp">
+
+        <!-- Ícono de ruta -->
+        <ImageView
+                android:id="@+id/ivFrecuenteIcon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_circle_green"
+                android:padding="6dp"
+                android:src="@drawable/ic_route"
+                app:tint="#005236"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+        <!-- Botón X para eliminar -->
+        <ImageButton
+                android:id="@+id/btnRemoveFrecuente"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="#AAAAAA"
+                android:contentDescription="Quitar de frecuentes"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+        <!-- Indicador ★ si está fijada manualmente -->
+        <TextView
+                android:id="@+id/tvPinnedBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="★"
+                android:textColor="@color/accent_yellow"
+                android:textSize="12sp"
+                android:visibility="gone"
+                app:layout_constraintEnd_toStartOf="@id/btnRemoveFrecuente"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginEnd="4dp"/>
+
+        <!-- Nombre de la ruta -->
+        <TextView
+                android:id="@+id/tvFrecuenteName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Bogotá-Chía"
+                android:textColor="@color/text_main"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/ivFrecuenteIcon"/>
+
+        <!-- Botón iniciar rápido -->
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFrecuenteStart"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="6dp"
+                android:text="Iniciar"
+                android:textColor="#006c49"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:icon="@drawable/ic_navigation"
+                app:iconTint="#006c49"
+                app:iconSize="16dp"
+                app:iconGravity="textStart"
+                app:layout_constraintTop_toBottomOf="@id/tvFrecuenteName"
+                app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
