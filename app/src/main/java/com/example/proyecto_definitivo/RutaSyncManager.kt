@@ -5,7 +5,13 @@ import android.util.Log
 import androidx.core.content.edit
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
 
@@ -59,7 +65,11 @@ class RutaSyncManager(private val context: Context) {
         currentListener = db.child("rutas").child(userId).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 scope.launch {
-                    processSnapshot(snapshot)
+                    val routes = processSnapshot(snapshot)
+                    // La UI debe reflejar cada snapshot de Firebase (altas/bajas/edits), no solo forceSync().
+                    withContext(Dispatchers.Main) {
+                        notifySyncCompleted(routes)
+                    }
                 }
             }
             
@@ -111,8 +121,10 @@ class RutaSyncManager(private val context: Context) {
         
         for (rutaSnap in snapshot.children) {
             try {
-                val ruta = rutaSnap.getValue(Ruta::class.java)
-                if (ruta != null && validateRoute(ruta)) {
+                val raw = rutaSnap.getValue(Ruta::class.java) ?: continue
+                val snapKey = rutaSnap.key
+                val ruta = if (raw.id.isBlank() && !snapKey.isNullOrBlank()) raw.copy(id = snapKey) else raw
+                if (validateRoute(ruta)) {
                     routes.add(ruta)
                     Log.d(TAG, "Ruta procesada: ${ruta.nombre} (ID: ${ruta.id})")
                 } else {
@@ -127,10 +139,13 @@ class RutaSyncManager(private val context: Context) {
         
         if (routes.isNotEmpty()) {
             cacheRoutes(routes)
-            prefs.edit { putLong(LAST_SYNC_TIMESTAMP, System.currentTimeMillis()) }
             Log.i(TAG, "Sincronización completada: ${routes.size} rutas procesadas")
+        } else {
+            prefs.edit { remove(CACHED_ROUTES_KEY) }
+            Log.i(TAG, "Sin rutas: caché local vaciada")
         }
-        
+        prefs.edit { putLong(LAST_SYNC_TIMESTAMP, System.currentTimeMillis()) }
+
         return routes
     }
     

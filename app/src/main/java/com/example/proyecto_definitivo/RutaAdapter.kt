@@ -8,6 +8,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 
+import androidx.recyclerview.widget.DiffUtil
+
 /**
  * Adapter para la lista de rutas en la pantalla de configuración.
  *
@@ -18,7 +20,7 @@ import com.google.android.material.button.MaterialButton
  * - ▶ Iniciar recorrido
  */
 class RutaAdapter(
-    private val listaRutas: List<Ruta>,
+    private var listaRutas: List<Ruta>,
     private val onEditClick: (Ruta) -> Unit,
     private val onDeleteClick: (Ruta) -> Unit,
     private val onStartClick: (Ruta) -> Unit,
@@ -64,4 +66,25 @@ class RutaAdapter(
     }
 
     override fun getItemCount(): Int = listaRutas.size
+
+    // 🔥 SOLUCIÓN PARPADEO: DiffUtil para actualizaciones fluidas
+    fun actualizarRutas(nuevasRutas: List<Ruta>) {
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize() = listaRutas.size
+            override fun getNewListSize() = nuevasRutas.size
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return listaRutas[oldItemPosition].id == nuevasRutas[newItemPosition].id
+            }
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                val old = listaRutas[oldItemPosition]
+                val new = nuevasRutas[newItemPosition]
+                return old.nombre == new.nombre &&
+                       old.descripcion == new.descripcion &&
+                       old.radioDeteccion == new.radioDeteccion
+            }
+        }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        this.listaRutas = ArrayList(nuevasRutas)
+        diffResult.dispatchUpdatesTo(this)
+    }
 }

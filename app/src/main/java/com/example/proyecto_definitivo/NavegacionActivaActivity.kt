@@ -2,17 +2,30 @@ package com.example.proyecto_definitivo
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.CameraPerspective
 import com.google.android.libraries.navigation.ArrivalEvent
@@ -22,17 +35,20 @@ import com.google.android.libraries.navigation.Navigator
 import com.google.android.libraries.navigation.RoutingOptions
 import com.google.android.libraries.navigation.SupportNavigationFragment
 import com.google.android.libraries.navigation.Waypoint
-
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
 /**
  * Pantalla de Navegación Profesional usando Google Maps Navigation SDK.
- *
- * Proporciona la experiencia completa de Google Maps (vista 3D, recálculo automático,
- * guía paso a paso) integrada directamente en la aplicación.
+ * Integrada con sistema de reportes de emergencia y UI Predictiva de Paraderos.
  */
 class NavegacionActivaActivity : AppCompatActivity() {
 
@@ -42,6 +58,7 @@ class NavegacionActivaActivity : AppCompatActivity() {
     private lateinit var navFragment: SupportNavigationFragment
     private var googleMap: GoogleMap? = null
     private var navigator: Navigator? = null
+    private lateinit var fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient
 
     private lateinit var tvActiveNextStop: TextView
     private lateinit var tvActiveDistance: TextView
@@ -50,6 +67,32 @@ class NavegacionActivaActivity : AppCompatActivity() {
     private lateinit var btnSafetyExit: MaterialButton
     private lateinit var fabReportarNovedad: FloatingActionButton
     private lateinit var fabPausarRuta: FloatingActionButton
+
+    // 🔥 FASE 2: Vistas de la Tarjeta Mágica Predictiva
+    private lateinit var cardParaderoMagico: View
+    private lateinit var tvNombreParaderoProximo: TextView
+    private lateinit var tvPasajerosSuben: TextView
+    private lateinit var tvPasajerosBajan: TextView
+    private var tarjetaVisible = false
+    
+    // Aforo (Fase 9)
+    private lateinit var tvAforoActual: TextView
+    private lateinit var btnSumarPasajero: TextView
+    private lateinit var btnRestarPasajero: TextView
+    private var pasajerosActuales = 0
+    private var cupoSentados = 40
+
+    // 🔥 FASE 3: Variables del Guardián
+    private var isDeviating = false
+    private var rutaInicializada = false
+
+    // Pantalla de Carga
+    private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingStatus: TextView
+
+    // Voz de Dios
+    private lateinit var speechRecognizer: SpeechRecognizer
+    private lateinit var textToSpeech: TextToSpeech
 
     // Variables de Ruta
     private val db = FirebaseDatabase.getInstance().reference
@@ -62,16 +105,63 @@ class NavegacionActivaActivity : AppCompatActivity() {
     private var indicePuntoActual = 0
     private var tiempoInicioRuta: Long = 0L
 
+    // STEP 6: Variables Temporales para Evidencia
+    private var pendingIncidentType: IncidentType? = null
+    private var pendingPriority: Priority? = null
+    private var pendingDesc: String = ""
+
+    // STEP 6: El Atrapador de la Cámara
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val photoPath = result.data?.getStringExtra("PHOTO_PATH")
+            if (pendingIncidentType != null && pendingPriority != null) {
+                capturarIncidenteYGuardar(pendingIncidentType!!, pendingPriority!!, pendingDesc, photoPath)
+            }
+        }
+    }
+
+    private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            if (pendingIncidentType != null) {
+                val intent = Intent(this, CameraEvidenceActivity::class.java)
+                cameraLauncher.launch(intent)
+            }
+        } else {
+            Toast.makeText(this, "Permiso de cámara denegado. No se puede tomar evidencia.", Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_navegacion_activa)
 
         initViews()
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         receiveIntentData()
+        setupVoiceLogic()
         setupNavigationSDK()
         setupBackPressHandler()
 
         tiempoInicioRuta = System.currentTimeMillis()
+
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 1002)
+        }
+
+        iniciarLatidoActividad()
+    }
+
+    private fun iniciarLatidoActividad() {
+        lifecycleScope.launch {
+            while (true) {
+                val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+                if (currentUserId != null && rutaId.isNotEmpty()) {
+                    db.child("users").child(currentUserId).child("ruta_actual")
+                        .child("ultimaActividad").setValue(System.currentTimeMillis())
+                }
+                delay(30000) // Cada 30 segundos
+            }
+        }
     }
 
     private fun initViews() {
@@ -83,9 +173,52 @@ class NavegacionActivaActivity : AppCompatActivity() {
         fabReportarNovedad = findViewById(R.id.fabReportarNovedad)
         fabPausarRuta = findViewById(R.id.fabPausarRuta)
 
+        // 🔥 FASE 2: Inicializar vistas de la tarjeta mágica
+        cardParaderoMagico = findViewById(R.id.cardParaderoMagico)
+        tvNombreParaderoProximo = findViewById(R.id.tvNombreParaderoProximo)
+        tvPasajerosSuben = findViewById(R.id.tvPasajerosSuben)
+        tvPasajerosBajan = findViewById(R.id.tvPasajerosBajan)
+
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        tvLoadingStatus = findViewById(R.id.tvLoadingStatus)
+        
+        tvAforoActual = findViewById(R.id.tvAforoActual)
+        btnSumarPasajero = findViewById(R.id.btnSumarPasajero)
+        btnRestarPasajero = findViewById(R.id.btnRestarPasajero)
+
+        btnSumarPasajero.setOnClickListener { cambiarAforo(1) }
+        btnRestarPasajero.setOnClickListener { cambiarAforo(-1) }
+
+        findViewById<View>(R.id.cardAforoControl).setOnClickListener {
+            val intent = Intent(this, AsientosActivity::class.java).apply {
+                putExtra("rutaId", rutaId)
+                putExtra("conductorId", FirebaseAuth.getInstance().currentUser?.uid)
+            }
+            startActivity(intent)
+        }
+
         btnEndRoute.setOnClickListener { solicitarMotivoFinalizacion(false) }
         btnSafetyExit.setOnClickListener { mostrarAlertaSeguridad() }
         fabPausarRuta.setOnClickListener { togglePausa() }
+
+        fabReportarNovedad.setOnClickListener {
+            mostrarPanelMetal()
+        }
+
+        fabReportarNovedad.setOnLongClickListener {
+            val mensaje = "Comando de voz activado. Por favor indique cuál."
+            hablar(mensaje)
+
+            lifecycleScope.launch {
+                delay(4000)
+                val intentVoz = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-CO")
+                }
+                speechRecognizer.startListening(intentVoz)
+            }
+            true
+        }
     }
 
     private fun receiveIntentData() {
@@ -94,19 +227,14 @@ class NavegacionActivaActivity : AppCompatActivity() {
         rutaRadio = intent.getFloatExtra("rutaRadio", 30f)
     }
 
-    /**
-     * Inicializa el Navigation SDK de Google Maps.
-     */
     private fun setupNavigationSDK() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
             return
         }
 
-        // 1. Obtener el fragmento de navegación
         navFragment = supportFragmentManager.findFragmentById(R.id.mapNavegacion) as SupportNavigationFragment
 
-        // 2. Mostrar T&C requeridos por Google
         NavigationApi.showTermsAndConditionsDialog(this, "my_company", "Zenda") { accepted ->
             if (accepted) {
                 initializeNavigationApi()
@@ -119,8 +247,12 @@ class NavegacionActivaActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun initializeNavigationApi() {
+        tvLoadingStatus.text = "Iniciando SDK de Navegación..."
+        loadingOverlay.visibility = View.VISIBLE
+        
         NavigationApi.getNavigator(this, object : NavigationApi.NavigatorListener {
             override fun onNavigatorReady(nav: Navigator) {
+                tvLoadingStatus.text = "Configurando el mapa..."
                 navigator = nav
                 setupNavigator()
 
@@ -128,12 +260,22 @@ class NavegacionActivaActivity : AppCompatActivity() {
                     googleMap = map
                     setupMapUI()
                     cargarPuntosRutaYEmpezar()
+                    cargarDatosCapacidad()
                 }
             }
 
             override fun onError(@NavigationApi.ErrorCode errorCode: Int) {
-                Log.e(TAG, "Error inicializando Navigator: $errorCode")
-                Toast.makeText(this@NavegacionActivaActivity, "Error de Navegación: $errorCode", Toast.LENGTH_LONG).show()
+                loadingOverlay.visibility = View.GONE
+                val errorMsg = when (errorCode) {
+                    NavigationApi.ErrorCode.NOT_AUTHORIZED -> "API Key no autorizada o falta SHA-1 válido."
+                    NavigationApi.ErrorCode.TERMS_NOT_ACCEPTED -> "Términos no aceptados."
+                    NavigationApi.ErrorCode.NETWORK_ERROR -> "Sin conexión a Internet."
+                    NavigationApi.ErrorCode.LOCATION_PERMISSION_MISSING -> "Faltan permisos de ubicación."
+                    else -> "Error desconocido ($errorCode)"
+                }
+                Log.e(TAG, "Navigation SDK Error: $errorMsg")
+                Toast.makeText(this@NavegacionActivaActivity, "Error SDK: $errorMsg", Toast.LENGTH_LONG).show()
+                hablar("Error al iniciar el mapa. Verifica tu conexión o los permisos de Google.")
             }
         })
     }
@@ -142,30 +284,43 @@ class NavegacionActivaActivity : AppCompatActivity() {
         navigator?.let { nav ->
             nav.setAudioGuidance(Navigator.AudioGuidance.VOICE_ALERTS_AND_GUIDANCE)
 
-            // Listener para cuando llegamos a un waypoint (parada)
-            nav.addArrivalListener(object : Navigator.ArrivalListener {
-                override fun onArrival(event: ArrivalEvent) {
-                    val waypointTitle = event.waypoint?.title ?: return
-                    val punto = listaPuntos.find { it.id == waypointTitle }
-                    punto?.let { registrarLlegadaEnFirebase(it) }
+            // Listener de llegadas a paraderos
+            nav.addArrivalListener { event ->
+                val waypointTitle = event.waypoint?.title ?: return@addArrivalListener
+                val punto = listaPuntos.find { it.id == waypointTitle }
+                punto?.let { registrarLlegadaEnFirebase(it) }
 
-                    indicePuntoActual++
-                    if (indicePuntoActual < listaPuntos.size) {
-                        actualizarUIProximaParada()
-                        // Continuar al siguiente punto
-                        nav.continueToNextDestination()
+                indicePuntoActual++
+                if (indicePuntoActual < listaPuntos.size) {
+                    actualizarUIProximaParada()
+                    nav.continueToNextDestination()
+                } else {
+                    tvActiveNextStop.text = "Ruta completada"
+                    solicitarMotivoFinalizacion(true)
+                }
+            }
+
+            // 🔥 FASE 2: Radar de proximidad predictivo (10m de distancia o 5s de tiempo)
+            nav.addRemainingTimeOrDistanceChangedListener(10, 5, object : Navigator.RemainingTimeOrDistanceChangedListener {
+                override fun onRemainingTimeOrDistanceChanged() {
+                    val distanceToNextStop = nav.currentTimeAndDistance?.meters ?: Int.MAX_VALUE
+
+                    // Si entramos en la zona de aterrizaje (< 300 metros)
+                    if (distanceToNextStop <= 300) {
+                        mostrarTarjetaParadero()
                     } else {
-                        tvActiveNextStop.text = "Ruta completada"
-                        solicitarMotivoFinalizacion(true)
+                        ocultarTarjetaParadero()
                     }
                 }
             })
 
-            nav.addRemainingTimeOrDistanceChangedListener(30, 100, object : Navigator.RemainingTimeOrDistanceChangedListener {
-                override fun onRemainingTimeOrDistanceChanged() {
-                    // Actualizar UI extra si es necesario
+            // 🔥 FASE 3: El Perro Guardián (Tolerancia Cero)
+            nav.addRouteChangedListener {
+                // Si la ruta ya estaba inicializada y no estamos ya en proceso de desvío
+                if (rutaInicializada && !isDeviating) {
+                    dispararAlarmaDesvio()
                 }
-            })
+            }
         }
     }
 
@@ -179,70 +334,333 @@ class NavegacionActivaActivity : AppCompatActivity() {
     }
 
     private fun cargarPuntosRutaYEmpezar() {
+        tvLoadingStatus.text = "Descargando ruta del búnker..."
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         db.child("rutas").child(currentUserId).child(rutaId).child("puntos").get().addOnSuccessListener { snapshot ->
             listaPuntos.clear()
             val waypoints = mutableListOf<Waypoint>()
-            
+
             for (puntoSnap in snapshot.children) {
                 val punto = puntoSnap.getValue(PuntoRuta::class.java)
-                punto?.let { 
+                punto?.let {
                     listaPuntos.add(it)
                     val wp = Waypoint.builder()
                         .setLatLng(it.latitud, it.longitud)
-                        .setTitle(it.id) // Usamos el ID para identificarlo
+                        .setTitle(it.id)
                         .build()
                     waypoints.add(wp)
                 }
             }
             listaPuntos.sortBy { it.orden }
+            if (waypoints.isNotEmpty()) iniciarNavegacionGoogle(waypoints)
+        }
+    }
+
+    private fun cargarDatosCapacidad() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.child("rutas").child(uid).child(rutaId).get().addOnSuccessListener { snapshot ->
+            cupoSentados = snapshot.child("cupoSentados").getValue(Int::class.java) ?: 40
+            pasajerosActuales = snapshot.child("pasajerosActuales").getValue(Int::class.java) ?: 0
+            actualizarUIAforo()
+        }
+    }
+
+    private fun cambiarAforo(delta: Int) {
+        val nuevoTotal = pasajerosActuales + delta
+        if (nuevoTotal in 0..(cupoSentados + 20)) { // 20 de margen para gente de pie
+            pasajerosActuales = nuevoTotal
+            actualizarUIAforo()
             
-            if (waypoints.isNotEmpty()) {
-                iniciarNavegacionGoogle(waypoints)
-            }
+            // Sincronizar con Firebase (User node y Rutas node)
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+            db.child("users").child(uid).child("ruta_actual").child("pasajerosActuales").setValue(pasajerosActuales)
+            db.child("rutas").child(uid).child(rutaId).child("pasajerosActuales").setValue(pasajerosActuales)
+        }
+    }
+
+    private fun actualizarUIAforo() {
+        tvAforoActual.text = "$pasajerosActuales/$cupoSentados"
+        if (pasajerosActuales >= cupoSentados) {
+            tvAforoActual.setTextColor(android.graphics.Color.parseColor("#ba1a1a"))
+        } else {
+            tvAforoActual.setTextColor(android.graphics.Color.parseColor("#001e40"))
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun iniciarNavegacionGoogle(waypoints: List<Waypoint>) {
+        tvLoadingStatus.text = "Calculando ruta estricta..."
         navigator?.let { nav ->
-            val routingOptions = RoutingOptions().apply {
-                travelMode(RoutingOptions.TravelMode.DRIVING)
-            }
-
+            val routingOptions = RoutingOptions().apply { travelMode(RoutingOptions.TravelMode.DRIVING) }
             nav.setDestinations(waypoints, routingOptions, DisplayOptions())
                 .setOnResultListener { routeStatus ->
                     if (routeStatus == Navigator.RouteStatus.OK) {
+                        loadingOverlay.visibility = View.GONE
                         nav.startGuidance()
                         actualizarUIProximaParada()
+                        
+                        // 🔥 FASE 3: Darle 3 segundos al sistema antes de armar al Guardián
+                        lifecycleScope.launch {
+                            kotlinx.coroutines.delay(3000)
+                            rutaInicializada = true
+                        }
                     } else {
-                        Log.e(TAG, "Error al establecer destinos: $routeStatus")
+                        loadingOverlay.visibility = View.GONE
+                        Toast.makeText(this, "No se pudo trazar la ruta: $routeStatus", Toast.LENGTH_LONG).show()
+                        hablar("Error al trazar la ruta. Reinicia el recorrido.")
                     }
                 }
         }
     }
 
+    // 🔥 FASE 3: Lógica del Guardián de Desvíos
+    private fun dispararAlarmaDesvio() {
+        isDeviating = true
+        hablar("Alerta. Desvío no autorizado detectado. Ingrese código de autorización para continuar.")
+        
+        // Pausamos la navegación visual para no seguir guiando por el desvío sin permiso
+        navigator?.stopGuidance()
+
+        val input = EditText(this).apply {
+            hint = "Contraseña (zenda123)"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("🚨 DESVÍO DETECTADO 🚨")
+            .setMessage("Has abandonado la ruta estricta. Ingrese la contraseña de administrador para autorizar el recálculo.")
+            .setView(input)
+            .setCancelable(false) // In-cancelable
+            .setPositiveButton("Autorizar", null) // Lo sobreescribimos abajo para evitar cierre por defecto
+            .create()
+
+        dialog.show()
+
+        // Evitar que el diálogo se cierre si la contraseña es incorrecta
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val pass = input.text.toString()
+            if (pass == "zenda123") {
+                Toast.makeText(this, "Desvío Autorizado", Toast.LENGTH_SHORT).show()
+                isDeviating = false
+                navigator?.startGuidance() // Retomamos la navegación con la nueva ruta recalculada
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Contraseña incorrecta", Toast.LENGTH_SHORT).show()
+                hablar("Contraseña incorrecta.")
+                input.text.clear()
+            }
+        }
+    }
+
+    // 🔥 FASE 2: Lógica de la Tarjeta Mágica
+    private fun mostrarTarjetaParadero() {
+        if (!tarjetaVisible && indicePuntoActual < listaPuntos.size) {
+            tarjetaVisible = true
+            val siguienteParadero = listaPuntos[indicePuntoActual]
+
+            tvNombreParaderoProximo.text = "Siguiente: ${siguienteParadero.nombre}"
+
+            // MOCK DATA: Simulación de pasajeros con datos random
+            tvPasajerosSuben.text = (1..6).random().toString()
+            tvPasajerosBajan.text = (0..4).random().toString()
+
+            // Animación fluida desde arriba hacia abajo
+            cardParaderoMagico.visibility = View.VISIBLE
+            cardParaderoMagico.translationY = -200f
+            cardParaderoMagico.alpha = 0f
+            cardParaderoMagico.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(400)
+                .start()
+        }
+    }
+
+    private fun ocultarTarjetaParadero() {
+        if (tarjetaVisible) {
+            tarjetaVisible = false
+            // Animación de repliegue
+            cardParaderoMagico.animate()
+                .translationY(-200f)
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction { cardParaderoMagico.visibility = View.GONE }
+                .start()
+        }
+    }
+
+    private fun preguntarPorEvidencia(tipo: IncidentType, prioridad: Priority, descBase: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Evidencia del Reporte")
+        builder.setMessage("¿Deseas adjuntar una fotografía del incidente o enviarlo inmediatamente?")
+
+        builder.setPositiveButton("📷 TOMAR FOTO") { dialog, _ ->
+            pendingIncidentType = tipo
+            pendingPriority = prioridad
+            pendingDesc = descBase
+
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            } else {
+                val intent = Intent(this, CameraEvidenceActivity::class.java)
+                cameraLauncher.launch(intent)
+            }
+            dialog.dismiss()
+        }
+
+        builder.setNeutralButton("📝 SOLO ENVIAR") { dialog, _ ->
+            capturarIncidenteYGuardar(tipo, prioridad, descBase, null)
+            dialog.dismiss()
+        }
+
+        builder.show()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun capturarIncidenteYGuardar(tipo: IncidentType, prioridad: Priority, desc: String, photoPath: String? = null) {
+        Toast.makeText(this, "Capturando ubicación...", Toast.LENGTH_SHORT).show()
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val nuevoReporte = IncidentReport(
+                    driverId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonimo",
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    type = tipo,
+                    priority = prioridad,
+                    description = desc,
+                    photoUrl = photoPath
+                )
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val dao = ZendaDatabase.getDatabase(applicationContext).incidentDao()
+                    dao.insertReport(nuevoReporte)
+                    programarSincronizacion()
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@NavegacionActivaActivity, "Reporte enviado al Búnker 🤘", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun programarSincronizacion() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val syncRequest = OneTimeWorkRequestBuilder<IncidentSyncWorker>()
+            .setConstraints(constraints)
+            .build()
+        WorkManager.getInstance(applicationContext).enqueue(syncRequest)
+    }
+
+    private fun mostrarPanelMetal() {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_incident, null)
+        bottomSheetDialog.setContentView(view)
+
+        view.findViewById<MaterialButton>(R.id.btnFuelAccident).setOnClickListener {
+            preguntarPorEvidencia(IncidentType.ACCIDENTE, Priority.ALTA, "Choque en ruta")
+            bottomSheetDialog.dismiss()
+        }
+
+        view.findViewById<MaterialButton>(R.id.btnLightningMech).setOnClickListener {
+            preguntarPorEvidencia(IncidentType.MECANICO, Priority.MEDIA, "Falla de motor/llanta")
+            bottomSheetDialog.dismiss()
+        }
+
+        view.findViewById<MaterialButton>(R.id.btnSeekDestroy).setOnClickListener {
+            preguntarPorEvidencia(IncidentType.MECANICO, Priority.ALTA, "SEEK & DESTROY: Bus inoperativo, requiere grúa")
+            bottomSheetDialog.dismiss()
+        }
+
+        view.findViewById<MaterialButton>(R.id.btnAbort).setOnClickListener {
+            bottomSheetDialog.dismiss()
+        }
+        view.findViewById<MaterialButton>(R.id.btnSOS).setOnClickListener {
+            val callIntent = Intent(Intent.ACTION_DIAL).apply {
+                data = android.net.Uri.parse("tel:112")
+            }
+            startActivity(callIntent)
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.show()
+    }
+
+    private fun procesarComandoDeVoz(comando: String) {
+        when {
+            comando.contains("accidente") || comando.contains("choque") || comando.contains("emergencia") -> {
+                hablar("Recibido. Reportando accidente grave al sistema. Mantenga la calma.")
+                capturarIncidenteYGuardar(IncidentType.ACCIDENTE, Priority.ALTA, "Reporte por VOZ: Accidente Grave", null)
+            }
+            comando.contains("falla") || comando.contains("mecánica") || comando.contains("varado") -> {
+                hablar("Copiado. Reportando falla mecánica.")
+                capturarIncidenteYGuardar(IncidentType.MECANICO, Priority.MEDIA, "Reporte por VOZ: Falla Mecánica", null)
+            }
+            comando.contains("reemplazo") || comando.contains("grúa") -> {
+                hablar("Seek and destroy activado. Solicitando grúa y bus de reemplazo.")
+                capturarIncidenteYGuardar(IncidentType.MECANICO, Priority.ALTA, "Reporte por VOZ: SEEK & DESTROY (Reemplazo urgente)", null)
+            }
+            else -> {
+                hablar("Comando no reconocido. Diga accidente, falla mecánica, o reemplazo.")
+            }
+        }
+    }
+
+    private fun setupVoiceLogic() {
+        textToSpeech = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech.language = Locale("es", "CO")
+            }
+        }
+
+        if (SpeechRecognizer.isRecognitionAvailable(this)) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+            speechRecognizer.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {}
+                override fun onBeginningOfSpeech() {}
+                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() {}
+                override fun onError(error: Int) {
+                    hablar("No copié, intenta de nuevo.")
+                }
+                override fun onResults(results: Bundle?) {
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    if (!matches.isNullOrEmpty()) {
+                        procesarComandoDeVoz(matches[0].lowercase())
+                    }
+                }
+                override fun onPartialResults(partialResults: Bundle?) {}
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+        }
+    }
+
+    private fun hablar(mensaje: String) {
+        if (::textToSpeech.isInitialized) {
+            textToSpeech.speak(mensaje, TextToSpeech.QUEUE_FLUSH, null, "")
+        }
+    }
+
     private fun actualizarUIProximaParada() {
         if (indicePuntoActual < listaPuntos.size) {
-            val siguiente = listaPuntos[indicePuntoActual]
-            tvActiveNextStop.text = siguiente.nombre
+            tvActiveNextStop.text = listaPuntos[indicePuntoActual].nombre
         }
     }
 
     private fun registrarLlegadaEnFirebase(punto: PuntoRuta) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val ahora = System.currentTimeMillis()
-        
         val puntoRegistrado = mapOf(
             "puntoId" to punto.id,
             "nombre" to punto.nombre,
-            "tiempoLlegada" to ahora,
+            "tiempoLlegada" to System.currentTimeMillis(),
             "estado" to "completado"
         )
-
         db.child("recorridos").child(currentUserId).child(recorridoId).child("puntosRegistrados").child(punto.id).setValue(puntoRegistrado)
         db.child("users").child(currentUserId).child("ruta_actual").child("puntos_completados").setValue(indicePuntoActual + 1)
-        
         Toast.makeText(this, "Llegada a: ${punto.nombre}", Toast.LENGTH_SHORT).show()
     }
 
@@ -251,11 +669,9 @@ class NavegacionActivaActivity : AppCompatActivity() {
         if (isNavigating) {
             navigator?.stopGuidance()
             fabPausarRuta.setImageResource(android.R.drawable.ic_media_play)
-            Toast.makeText(this, "Navegación en pausa", Toast.LENGTH_SHORT).show()
         } else {
             navigator?.startGuidance()
             fabPausarRuta.setImageResource(android.R.drawable.ic_media_pause)
-            Toast.makeText(this, "Navegación reanudada", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -264,9 +680,7 @@ class NavegacionActivaActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Finalizar Ruta")
             .setView(editText)
-            .setPositiveButton("Terminar") { _, _ ->
-                finalizarRuta(esAutomatico, editText.text.toString())
-            }
+            .setPositiveButton("Terminar") { _, _ -> finalizarRuta(esAutomatico, editText.text.toString()) }
             .setNegativeButton("Cancelar", null)
             .show()
     }
@@ -274,20 +688,15 @@ class NavegacionActivaActivity : AppCompatActivity() {
     private fun finalizarRuta(esAutomatico: Boolean, motivo: String) {
         navigator?.stopGuidance()
         navigator?.clearDestinations()
-        
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val actualizacion = mapOf(
             "finTiempo" to System.currentTimeMillis(),
             "estado" to if (esAutomatico) "finalizado_auto" else "finalizado_manual",
             "motivoTermino" to motivo
         )
-        
         db.child("recorridos").child(currentUserId).child(recorridoId).updateChildren(actualizacion)
         db.child("users").child(currentUserId).child("ruta_actual").removeValue()
-        
-        startActivity(Intent(this, ResumenRecorridoActivity::class.java).apply {
-            putExtra("recorridoId", recorridoId)
-        })
+        startActivity(Intent(this, ResumenRecorridoActivity::class.java).apply { putExtra("recorridoId", recorridoId) })
         finish()
     }
 
@@ -321,5 +730,7 @@ class NavegacionActivaActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         navigator?.cleanup()
+        if (::speechRecognizer.isInitialized) speechRecognizer.destroy()
+        if (::textToSpeech.isInitialized) textToSpeech.shutdown()
     }
 }

@@ -8,15 +8,20 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.util.Log
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -37,6 +42,7 @@ import java.util.*
 class HomeRutasActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private val db = FirebaseDatabase.getInstance().reference
     private lateinit var dbRef: DatabaseReference
 
     private lateinit var tvGreeting: TextView
@@ -45,9 +51,10 @@ class HomeRutasActivity : AppCompatActivity() {
     private lateinit var routeProgress: ProgressBar
     private lateinit var cardActiveRoute: MaterialCardView
     private lateinit var btnFollowRoute: MaterialButton
-    private lateinit var btnNewRoute: MaterialCardView
-    private lateinit var btnReportIncident: MaterialCardView
-    private lateinit var bottomNav: BottomNavigationView
+    private lateinit var fabNewRoute: FloatingActionButton
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navigationView: NavigationView
+    private lateinit var btnMenuDrawer: ImageButton
     private lateinit var badgeLive: TextView
 
     // Frecuentes UI
@@ -61,6 +68,12 @@ class HomeRutasActivity : AppCompatActivity() {
 
     private var hasActiveRoute = false
     private var hasAnyRoutes = false
+    private var isDocsExpired = false
+
+    // Control de Fugas de Memoria (Listeners)
+    private var userListener: ValueEventListener? = null
+    private var rutasListener: ValueEventListener? = null
+    private var viajesListener: ValueEventListener? = null
 
     // Datos de ruta activa (para el servicio flotante)
     private var activeRutaId = ""
@@ -95,10 +108,11 @@ class HomeRutasActivity : AppCompatActivity() {
         cardActiveRoute = findViewById(R.id.cardActiveRoute)
         btnFollowRoute = findViewById(R.id.btnFollowRoute)
 
-        btnNewRoute = findViewById(R.id.btnNewRoute)
-        btnReportIncident = findViewById(R.id.btnReportIncident)
+        fabNewRoute = findViewById(R.id.fabNewRoute)
+        drawerLayout = findViewById(R.id.drawerLayout)
+        navigationView = findViewById(R.id.navigationView)
+        btnMenuDrawer = findViewById(R.id.btnMenuDrawer)
 
-        bottomNav = findViewById(R.id.bottomNav)
         badgeLive = findViewById(R.id.badgeLive)
 
         // Frecuentes
@@ -118,34 +132,42 @@ class HomeRutasActivity : AppCompatActivity() {
         tvStat2Label.text = "RUTAS TOTAL"
 
         btnFollowRoute.setOnClickListener {
-            val userId = auth.currentUser?.uid ?: ""
-            FirebaseDatabase.getInstance().getReference("users").child(userId).child("ruta_actual")
-                .get().addOnSuccessListener { snapshot ->
-                    if (snapshot.exists()) {
-                        val rId = snapshot.child("id").value.toString()
-                        val rNombre = snapshot.child("nombre").value.toString()
-                        val recId = snapshot.child("recorridoId").value.toString()
-                        val rRadio = snapshot.child("radioDeteccion").getValue(Float::class.java) ?: 30f
+            if (isDocsExpired) {
+                mostrarAlertaDocs()
+            } else {
+                val userId = auth.currentUser?.uid ?: ""
+                FirebaseDatabase.getInstance().getReference("users").child(userId).child("ruta_actual")
+                    .get().addOnSuccessListener { snapshot ->
+                        if (snapshot.exists()) {
+                            val rId = snapshot.child("id").value.toString()
+                            val rNombre = snapshot.child("nombre").value.toString()
+                            val recId = snapshot.child("recorridoId").value.toString()
+                            val rRadio = snapshot.child("radioDeteccion").getValue(Float::class.java) ?: 30f
 
-                        val intent = Intent(this, NavegacionActivaActivity::class.java).apply {
-                            putExtra("rutaId", rId)
-                            putExtra("rutaNombre", rNombre)
-                            putExtra("recorridoId", recId)
-                            putExtra("rutaRadio", rRadio)
+                            val intent = Intent(this, NavegacionActivaActivity::class.java).apply {
+                                putExtra("rutaId", rId)
+                                putExtra("rutaNombre", rNombre)
+                                putExtra("recorridoId", recId)
+                                putExtra("rutaRadio", rRadio)
+                            }
+                            startActivity(intent)
+                        } else {
+                            startActivity(Intent(this, ListaRutas::class.java))
                         }
-                        startActivity(intent)
-                    } else {
-                        startActivity(Intent(this, ListaRutas::class.java))
                     }
-                }
+            }
         }
 
-        btnNewRoute.setOnClickListener {
-            startActivity(Intent(this, CrearRuta::class.java))
+        fabNewRoute.setOnClickListener {
+            if (isDocsExpired) {
+                mostrarAlertaDocs()
+            } else {
+                startActivity(Intent(this, CrearRuta::class.java))
+            }
         }
 
-        btnReportIncident.setOnClickListener {
-            showToast(getString(R.string.incident_report_open))
+        btnMenuDrawer.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
         }
     }
 
@@ -153,53 +175,98 @@ class HomeRutasActivity : AppCompatActivity() {
         val userId = auth.currentUser?.uid ?: return
 
         // 1. Datos del usuario (Saludo y Ruta Actual)
-        dbRef.addValueEventListener(object : ValueEventListener {
+        userListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
                     val nombre = snapshot.child("nombre").value.toString()
                     tvGreeting.text = getString(R.string.hello_user, nombre)
 
                     hasActiveRoute = snapshot.child("ruta_actual").exists()
+                    
+                    // 🔥 LIMPIEZA DE RUTAS FANTASMA
+                    if (hasActiveRoute) {
+                        val ultimaAct = snapshot.child("ruta_actual/ultimaActividad").getValue(Long::class.java) ?: 0L
+                        val currentTime = System.currentTimeMillis()
+                        val diffHours = (currentTime - ultimaAct) / (1000 * 60 * 60)
+                        
+                        // Si la ruta lleva más de 4 horas sin movimiento o es de otro día, la cerramos
+                        if (diffHours > 4) {
+                            dbRef.child("ruta_actual").removeValue()
+                            dbRef.child("rol").get().addOnSuccessListener { roleSnap ->
+                                val role = roleSnap.value.toString()
+                                val node = if (role == "CONDUCTOR") "conductores" else "pasajeros"
+                                db.child(node).child(userId).child("ruta_actual").removeValue()
+                            }
+                            hasActiveRoute = false
+                        }
+                    }
+
                     updateRouteUI(hasActiveRoute, snapshot)
-                    checkEmptyState()
+
+                    // Actualizar nombre y avatar en el Drawer
+                    try {
+                        val headerView = navigationView.getHeaderView(0)
+                        headerView.findViewById<TextView>(R.id.tvNavName).text = nombre
+                        headerView.findViewById<ImageView>(R.id.ivNavAvatar).setImageResource(R.drawable.ic_bus)
+                    } catch (e: Exception) {
+                        Log.e("HomeRutasActivity", "Error actualizando header drawer: ${e.message}")
+                    }
                 }
             }
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        dbRef.addValueEventListener(userListener!!)
 
         // 2. Rutas (para frecuentes + estadística)
-        FirebaseDatabase.getInstance().getReference("rutas").child(userId)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val rutas = mutableListOf<Ruta>()
-                    for (snap in snapshot.children) {
-                        snap.getValue(Ruta::class.java)?.let { rutas.add(it) }
-                    }
-                    hasAnyRoutes = rutas.isNotEmpty()
-                    tvStat2Value.text = rutas.size.toString()
-
-                    // Renderizar frecuentes con datos frescos
-                    renderFrecuentes(rutas)
-                    checkEmptyState()
+        rutasListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val rutas = mutableListOf<Ruta>()
+                for (snap in snapshot.children) {
+                    snap.getValue(Ruta::class.java)?.let { rutas.add(it) }
                 }
-                override fun onCancelled(error: DatabaseError) {}
-            })
+                hasAnyRoutes = rutas.isNotEmpty()
+                tvStat2Value.text = rutas.size.toString()
+
+                // Renderizar frecuentes con datos frescos
+                renderFrecuentes(rutas)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        FirebaseDatabase.getInstance().getReference("rutas").child(userId)
+            .addValueEventListener(rutasListener!!)
 
         // 3. Viajes de hoy
-        FirebaseDatabase.getInstance().getReference("recorridos").child(userId)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    var viajesHoy = 0
-                    val today = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+        viajesListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                var viajesHoy = 0
+                // 🔥 SOLUCIÓN CUELLO DE BOTELLA: Instanciar fuera del bucle
+                val sdf = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+                val today = sdf.format(Date())
 
-                    for (snap in snapshot.children) {
-                        val inicio = snap.child("inicioTiempo").getValue(Long::class.java) ?: 0L
-                        val dateStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date(inicio))
+                for (snap in snapshot.children) {
+                    val inicio = snap.child("inicioTiempo").getValue(Long::class.java) ?: 0L
+                    if (inicio > 0L) {
+                        val dateStr = sdf.format(Date(inicio))
                         if (dateStr == today) {
                             viajesHoy++
                         }
                     }
-                    tvStat1Value.text = if (viajesHoy > 0) viajesHoy.toString() else "0"
+                }
+                tvStat1Value.text = if (viajesHoy > 0) viajesHoy.toString() else "0"
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        FirebaseDatabase.getInstance().getReference("recorridos").child(userId)
+            .addValueEventListener(viajesListener!!)
+
+        // 4. Verificación de Documentos (SOAT/Tecno)
+        db.child("conductores").child(userId).child("documentos")
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    isDocsExpired = snapshot.child("vencido").getValue(Boolean::class.java) ?: false
+                    if (isDocsExpired) {
+                        showToast("⚠️ DOCUMENTACIÓN VENCIDA. Funciones de ruta bloqueadas.")
+                    }
                 }
                 override fun onCancelled(error: DatabaseError) {}
             })
@@ -308,13 +375,10 @@ class HomeRutasActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkEmptyState() {
-        // Nada que hacer actualmente; la lógica de visibilidad está en updateRouteUI y renderFrecuentes
-    }
 
     private fun setupBottomNav() {
-        bottomNav.selectedItemId = R.id.nav_home
-        bottomNav.setOnItemSelectedListener { item ->
+        navigationView.setNavigationItemSelectedListener { item ->
+            drawerLayout.closeDrawer(GravityCompat.START)
             when (item.itemId) {
                 R.id.nav_home -> true
                 R.id.nav_routes -> {
@@ -325,12 +389,26 @@ class HomeRutasActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_stats -> {
-                    showToast(getString(R.string.stats_development))
+                    startActivity(Intent(this, EstadisticasActivity::class.java))
+                    true
+                }
+                R.id.nav_report -> {
+                    showToast("Abriendo centro de reportes...")
                     false
                 }
                 R.id.nav_settings -> {
-                    showToast(getString(R.string.opening_profile))
-                    false
+                    startActivity(Intent(this, PerfilActivity::class.java))
+                    true
+                }
+                R.id.nav_docs -> {
+                    startActivity(Intent(this, DocumentosVehiculoActivity::class.java))
+                    true
+                }
+                R.id.nav_logout -> {
+                    auth.signOut()
+                    startActivity(Intent(this, Login::class.java))
+                    finish()
+                    true
                 }
                 else -> false
             }
@@ -391,5 +469,31 @@ class HomeRutasActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // 🔥 SOLUCIÓN FUGA DE MEMORIA: Cerrar las conexiones en tiempo real
+        userListener?.let { dbRef.removeEventListener(it) }
+        
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            rutasListener?.let { 
+                FirebaseDatabase.getInstance().getReference("rutas").child(userId).removeEventListener(it) 
+            }
+            viajesListener?.let { 
+                FirebaseDatabase.getInstance().getReference("recorridos").child(userId).removeEventListener(it) 
+            }
+        }
+    }
+    private fun mostrarAlertaDocs() {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Acceso Bloqueado")
+            .setMessage("No puedes iniciar rutas porque tu SOAT o Tecnomecánica están vencidos. Por favor, actualiza tus documentos.")
+            .setPositiveButton("Ir a Documentos") { _, _ ->
+                startActivity(Intent(this, DocumentosVehiculoActivity::class.java))
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
     }
 }

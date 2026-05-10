@@ -9,6 +9,10 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" />
 
     <application
             android:allowBackup="true"
@@ -55,6 +59,10 @@
                 android:name=".SelectionActivity"
                 android:exported="false" />
         <activity
+                android:name=".CameraEvidenceActivity"
+                android:screenOrientation="portrait"
+                android:exported="false" />
+        <activity
                 android:name=".Register"
                 android:exported="false" />
         <activity
@@ -65,6 +73,18 @@
                 android:exported="false" />
         <activity
                 android:name=".ResumenRecorridoActivity"
+                android:exported="false" />
+        <activity
+                android:name=".EstadisticasActivity"
+                android:exported="false" />
+        <activity
+                android:name=".PerfilActivity"
+                android:exported="false" />
+        <activity
+                android:name=".DocumentosVehiculoActivity"
+                android:exported="false" />
+        <activity
+                android:name=".AsientosActivity"
                 android:exported="false" />
         <service
                 android:name=".FloatingRouteService"
@@ -83,7 +103,7 @@
         </activity>
         <meta-data
                 android:name="com.google.android.geo.API_KEY"
-                android:value="AIzaSyCXMU8z4ZWl36oadP5so7q-7HVL270I1jQ" />
+                android:value="AIzaSyB7ONxsluVypI06fPFxu61nhRT7oM17eUI" />
     </application>
 
 </manifest>

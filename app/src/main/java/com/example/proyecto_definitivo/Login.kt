@@ -17,7 +17,7 @@ class Login : AppCompatActivity() {
     companion object {
         private const val AUTH_PREFS = "auth_dev_prefs"
         // Bandera de desarrollo: fuerza mostrar Login y deshabilita auto-login.
-        private const val FORCE_LOGIN_SCREEN = true
+        private const val FORCE_LOGIN_SCREEN = false
     }
 
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }

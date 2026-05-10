@@ -13,6 +13,203 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+    <!-- 🔥 Pantalla de Carga (No Panic) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/loadingOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#E1E3E4"
+            android:elevation="20dp">
+        <ProgressBar
+                android:id="@+id/progressBarMap"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:indeterminateTint="#006c49"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+        <TextView
+                android:id="@+id/tvLoadingStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Sintonizando satélites..."
+                android:textColor="#001e40"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toBottomOf="@id/progressBarMap"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardParaderoMagico"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginTop="48dp"
+            android:visibility="gone"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="16dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF">
+
+            <TextView
+                    android:id="@+id/tvNombreParaderoProximo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Próxima Parada"
+                    android:textAlignment="center"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="8dp"/>
+
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:paddingBottom="12dp"
+                    android:paddingHorizontal="12dp">
+
+                <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rounded_red"
+                        android:paddingVertical="12dp"
+                        android:layout_marginEnd="4dp">
+
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="↑ SUBEN"
+                            android:textColor="#C62828"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:letterSpacing="0.1"/>
+
+                    <TextView
+                            android:id="@+id/tvPasajerosSuben"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="3"
+                            android:textColor="#C62828"
+                            android:textStyle="bold"
+                            android:textSize="36sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_rounded_blue"
+                        android:paddingVertical="12dp"
+                        android:layout_marginStart="4dp">
+
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="↓ BAJAN"
+                            android:textColor="#1565C0"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:letterSpacing="0.1"/>
+
+                    <TextView
+                            android:id="@+id/tvPasajerosBajan"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1"
+                            android:textColor="#1565C0"
+                            android:textStyle="bold"
+                            android:textSize="36sp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Contador de Aforo (Fase 9) -->
+    <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAforoControl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+        <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                android:gravity="center_vertical"
+                android:background="#FFFFFF">
+            <TextView
+                    android:id="@+id/btnRestarPasajero"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:text="-"
+                    android:gravity="center"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#ba1a1a"
+                    android:background="@drawable/bg_rounded_red"
+                    android:clickable="true"
+                    android:focusable="true"/>
+            <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:gravity="center">
+                <TextView
+                        android:id="@+id/tvAforoActual"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0/40"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#001e40"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ASIENTOS"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:textColor="#737780"/>
+            </LinearLayout>
+            <TextView
+                    android:id="@+id/btnSumarPasajero"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:text="+"
+                    android:gravity="center"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#006c49"
+                    android:background="@drawable/bg_rounded_green"
+                    android:clickable="true"
+                    android:focusable="true"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
     <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardNextStop"
             android:layout_width="match_parent"
@@ -107,8 +304,6 @@
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
-
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabReportarNovedad"

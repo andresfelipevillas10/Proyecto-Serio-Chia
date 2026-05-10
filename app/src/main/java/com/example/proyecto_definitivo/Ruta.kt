@@ -10,6 +10,12 @@ data class Ruta( var id: String = "",
                  var horaSalida: String = "",
                  var horaLlegada: String = "",
                  var usoCount: Int = 0,
+                 var diasOperacion: List<String> = listOf(),
+                 var ultimaActividad: Long = System.currentTimeMillis(),
+                 var cupoSentados: Int = 40,
+                 var cupoPie: Int = 10,
+                 var pasajerosActuales: Int = 0,
+                 var mapaAsientos: Map<String, Boolean> = mapOf(), // seatId -> isOccupied
 
                  var puntos: Map<String, PuntoRuta>? = null
 )

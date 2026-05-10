@@ -61,6 +61,7 @@
     <color name="surface_container_low">#F3F4F3</color>
     <color name="surface_container_highest">#e1e3e2</color>
     <color name="surface_container_lowest">#FFFFFF</color>
+    <color name="primary_zenda_alpha_10">#1A006C49</color>
 
 
 </resources>

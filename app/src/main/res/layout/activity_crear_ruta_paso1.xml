@@ -56,7 +56,7 @@
             android:layout_height="0dp"
             android:fillViewport="true"
             app:layout_constraintTop_toBottomOf="@id/topBar"
-            app:layout_constraintBottom_toTopOf="@id/bottomNav">
+            app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
                 android:layout_width="match_parent"
@@ -142,13 +142,46 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:padding="16dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HORARIOS ESTIMADOS" android:textSize="10sp" android:textStyle="bold" android:textColor="@color/text_variant" android:letterSpacing="0.1" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CRONOGRAMA (FECHA Y HORA)" android:textSize="10sp" android:textStyle="bold" android:textColor="@color/text_variant" android:letterSpacing="0.1" />
+                    
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:startIconDrawable="@drawable/ic_calendar" app:startIconTint="@color/primary_zenda" app:boxBackgroundColor="#FFFFFF" app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp" app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp" app:boxStrokeWidth="0dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etFechaSalida" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Fecha de la ruta" android:focusable="false" android:clickable="true" android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp" android:baselineAligned="false">
                         <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="4dp" app:startIconDrawable="@drawable/ic_schedule" app:startIconTint="@color/primary_zenda" app:boxBackgroundColor="#FFFFFF" app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp" app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp" app:boxStrokeWidth="0dp">
-                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etHoraSalida" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Salida" android:focusable="false" android:clickable="true" android:inputType="none" />
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etHoraSalida" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Hora Salida" android:focusable="false" android:clickable="true" android:inputType="none" />
                         </com.google.android.material.textfield.TextInputLayout>
                         <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" app:startIconDrawable="@drawable/ic_flag" app:startIconTint="@color/primary_zenda" app:boxBackgroundColor="#FFFFFF" app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp" app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp" app:boxStrokeWidth="0dp">
-                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etHoraLlegada" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Llegada" android:focusable="false" android:clickable="true" android:inputType="none" />
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etHoraLlegada" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Hora Llegada" android:focusable="false" android:clickable="true" android:inputType="none" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DÍAS DE OPERACIÓN" android:textSize="10sp" android:textStyle="bold" android:textColor="@color/text_variant" android:letterSpacing="0.1" android:layout_marginTop="16dp" />
+                    
+                    <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/cgDias"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            app:chipSpacingHorizontal="4dp">
+                        <com.google.android.material.chip.Chip android:id="@+id/chipL" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="L" app:chipBackgroundColor="@color/nav_item_color_selector"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipM" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="M" app:chipBackgroundColor="@color/nav_item_color_selector"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipX" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="W" app:chipBackgroundColor="@color/nav_item_color_selector"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipJ" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="J" app:chipBackgroundColor="@color/nav_item_color_selector"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipV" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="V" app:chipBackgroundColor="@color/nav_item_color_selector"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipS" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="S" app:chipBackgroundColor="@color/nav_item_color_selector"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipD" style="@style/Widget.MaterialComponents.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="D" app:chipBackgroundColor="@color/nav_item_color_selector"/>
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CAPACIDAD DEL VEHÍCULO" android:textSize="10sp" android:textStyle="bold" android:textColor="@color/text_variant" android:letterSpacing="0.1" android:layout_marginTop="16dp" />
+                    
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="4dp" app:startIconDrawable="@drawable/ic_stats" app:startIconTint="@color/primary_zenda" app:boxBackgroundColor="#FFFFFF" app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp" app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp" app:boxStrokeWidth="0dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCupoSentados" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Asientos" android:inputType="number" android:text="40" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" app:startIconDrawable="@drawable/ic_stats" app:startIconTint="@color/primary_zenda" app:boxBackgroundColor="#FFFFFF" app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp" app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp" app:boxStrokeWidth="0dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCupoPie" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="De pie" android:inputType="number" android:text="15" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -256,21 +289,5 @@
                     app:cornerRadius="100dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottomNav"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_bottom_nav"
-            app:elevation="8dp"
-            app:itemIconTint="@color/nav_item_color_selector"
-            app:itemTextColor="@color/nav_item_color_selector"
-            app:menu="@menu/bottom_nav_menu"
-            app:labelVisibilityMode="labeled"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

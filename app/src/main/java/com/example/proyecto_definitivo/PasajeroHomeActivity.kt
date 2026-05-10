@@ -127,8 +127,8 @@ class PasajeroHomeActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_passenger_home -> true
                 R.id.nav_passenger_profile -> {
-                    Toast.makeText(this, "Perfil en desarrollo", Toast.LENGTH_SHORT).show()
-                    false
+                    startActivity(Intent(this, PerfilActivity::class.java))
+                    true
                 }
                 else -> false
             }
