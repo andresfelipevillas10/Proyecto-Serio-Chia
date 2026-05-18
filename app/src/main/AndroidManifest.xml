@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
             android:allowBackup="true"
@@ -74,6 +76,11 @@
             </intent-filter>
 
         </activity>
+        <service
+                android:name=".BusLocationService"
+                android:foregroundServiceType="location"
+                android:exported="false" />
+
         <meta-data
                 android:name="com.google.android.geo.API_KEY"
                 android:value="AIzaSyCXMU8z4ZWl36oadP5so7q-7HVL270I1jQ" />

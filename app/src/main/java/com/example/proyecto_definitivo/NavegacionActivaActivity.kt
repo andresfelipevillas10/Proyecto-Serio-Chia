@@ -8,7 +8,9 @@ import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
+import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -23,13 +25,10 @@ import com.google.android.gms.maps.model.*
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-
-
+import com.google.firebase.database.*
 
 class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    // Vistas de la interfaz moderna
     private lateinit var mapNavegacion: GoogleMap
     private var pathPolyline: Polyline? = null
     private var plannedRoutePolyline: Polyline? = null
@@ -42,27 +41,35 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var btnSafetyExit: MaterialButton
     private lateinit var fabReportarNovedad: FloatingActionButton
 
-    // Variables de Ruta
+    // Chip de pasajeros esperando
+    private lateinit var layoutPasajerosEsperando: LinearLayout
+    private lateinit var tvPasajerosEsperando: TextView
+
     private val db = FirebaseDatabase.getInstance().reference
     private var rutaId: String = ""
-    private var recorridoId: String = "" // ¡IMPORTANTE! El que recibimos del Pre-Recorrido
-    private var rutaRadio: Float = 30f // Metros para detectar llegada
+    private var recorridoId: String = ""
+    private var rutaRadio: Float = 30f
 
-    // Lógica de tracking
     private val listaPuntos = mutableListOf<PuntoRuta>()
     private var indicePuntoActual = 0
     private var tiempoUltimoPunto: Long = 0L
 
-    // Google Location API
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
 
+    // Listener para pasajeros esperando en la próxima parada
+    private var paraderoListener: ValueEventListener? = null
+    private var paraderoListenerRef: DatabaseReference? = null
+    private var currentParaderoId = ""
+
+    // Controla si la ruta terminó para no detener el servicio accidentalmente
+    private var routeFinished = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_navegacion_activa) // EL DISEÑO MODERNO
+        setContentView(R.layout.activity_navegacion_activa)
 
-        // 1. Enlazar Vistas
         tvActiveNextStop = findViewById(R.id.tvActiveNextStop)
         tvActiveDistance = findViewById(R.id.tvActiveDistance)
         tvActiveTime = findViewById(R.id.tvActiveTime)
@@ -70,46 +77,48 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         btnEndRoute = findViewById(R.id.btnEndRoute)
         btnSafetyExit = findViewById(R.id.btnSafetyExit)
         fabReportarNovedad = findViewById(R.id.fabReportarNovedad)
+        layoutPasajerosEsperando = findViewById(R.id.layoutPasajerosEsperando)
+        tvPasajerosEsperando = findViewById(R.id.tvPasajerosEsperando)
 
-        // 2. Recibir Datos
         rutaId = intent.getStringExtra("rutaId") ?: ""
-        recorridoId = intent.getStringExtra("recorridoId") ?: "" // Recibimos el ID del registro en BD
+        recorridoId = intent.getStringExtra("recorridoId") ?: ""
         rutaRadio = intent.getFloatExtra("rutaRadio", 30f)
 
-        // 3. Configurar Mapa
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapNavegacion) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        // 4. Configurar Botones
-        btnEndRoute.setOnClickListener {
-            solicitarClaveFinalizacion()
-        }
-
-        btnSafetyExit.setOnClickListener {
-            mostrarAlertaSeguridad()
-        }
-
+        btnEndRoute.setOnClickListener { solicitarClaveFinalizacion() }
+        btnSafetyExit.setOnClickListener { mostrarAlertaSeguridad() }
         fabReportarNovedad.setOnClickListener {
             Toast.makeText(this, "Novedad registrada (En desarrollo)", Toast.LENGTH_SHORT).show()
         }
 
-        // 5. Configurar GPS
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         configurarMotorUbicacion()
+        tiempoUltimoPunto = System.currentTimeMillis()
 
+        // Iniciar servicio en segundo plano para mantener GPS activo si el conductor sale
+        iniciarServicioSegundoPlano()
+    }
 
-        tiempoUltimoPunto = System.currentTimeMillis() // Inicia el reloj
+    private fun iniciarServicioSegundoPlano() {
+        if (recorridoId.isEmpty()) return
+        val serviceIntent = Intent(this, BusLocationService::class.java).apply {
+            putExtra(BusLocationService.EXTRA_RECORRIDO_ID, recorridoId)
+        }
+        startForegroundService(serviceIntent)
+    }
+
+    private fun detenerServicioSegundoPlano() {
+        stopService(Intent(this, BusLocationService::class.java))
     }
 
     override fun onMapReady(map: GoogleMap) {
         mapNavegacion = map
-
-        // Configuraciones de conducción
         mapNavegacion.uiSettings.isZoomControlsEnabled = false
         mapNavegacion.uiSettings.isCompassEnabled = true
-        mapNavegacion.setPadding(0, 300, 0, 0) // Bajamos el centro del mapa para que no lo tape la tarjeta superior
+        mapNavegacion.setPadding(0, 300, 0, 0)
 
-        // Inicializar el Polyline del recorrido real
         pathPolyline = mapNavegacion.addPolyline(
             PolylineOptions()
                 .color(Color.BLUE)
@@ -136,25 +145,23 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             listaPuntos.sortBy { it.orden }
 
             dibujarPuntos()
-            actualizarTarjetaProximaParada(null) // Inicializa la tarjeta con el primer punto
+            actualizarTarjetaProximaParada(null)
         }
     }
 
     private fun dibujarPuntos() {
         mapNavegacion.clear()
 
-        // 1. Dibujar la línea de la ruta planeada
         val polylineOptions = PolylineOptions()
             .color(Color.GRAY)
             .width(10f)
-            .pattern(listOf(Dash(20f), Gap(10f))) // Línea punteada para diferenciar
+            .pattern(listOf(Dash(20f), Gap(10f)))
 
         for (punto in listaPuntos) {
             polylineOptions.add(LatLng(punto.latitud, punto.longitud))
         }
         plannedRoutePolyline = mapNavegacion.addPolyline(polylineOptions)
 
-        // 2. Dibujar Marcadores
         for (punto in listaPuntos) {
             val posicion = LatLng(punto.latitud, punto.longitud)
             val colorMarcador = when (punto.Tipo) {
@@ -168,7 +175,6 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
                 .icon(BitmapDescriptorFactory.defaultMarker(colorMarcador)))
         }
 
-        // 3. Restaurar la línea de recorrido real (traveled path)
         pathPolyline = mapNavegacion.addPolyline(
             PolylineOptions()
                 .addAll(visitedPoints)
@@ -183,8 +189,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun configurarMotorUbicacion() {
         locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L).apply {
             setMinUpdateIntervalMillis(2000L)
-            // --- ¡NUEVO! ---
-            setMinUpdateDistanceMeters(3f) // Solo actualiza si me moví al menos 3 metros reales
+            setMinUpdateDistanceMeters(3f)
         }.build()
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -206,17 +211,11 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun procesarUbicacion(location: Location) {
-        // --- ¡NUEVO FILTRO ANTI-SALTOS! ---
-        // location.accuracy te dice el margen de error en metros.
-        // Si el error es mayor a 20 metros, ignoramos este dato porque es "basura".
-        if (location.hasAccuracy() && location.accuracy > 20f) {
-            return // Abortar: no actualizamos el mapa ni la línea
-        }
-        // 1. Centrar cámara en el conductor
+        if (location.hasAccuracy() && location.accuracy > 20f) return
+
         val posicionActual = LatLng(location.latitude, location.longitude)
         mapNavegacion.animateCamera(CameraUpdateFactory.newLatLngZoom(posicionActual, 18f))
 
-        // --- NUEVO: Actualizar la línea de recorrido ---
         visitedPoints.add(posicionActual)
 
         if (pathPolyline == null) {
@@ -233,7 +232,6 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             pathPolyline?.points = visitedPoints
         }
 
-        // --- NUEVO: Actualizar posición en tiempo real en Firebase ---
         if (recorridoId.isNotEmpty()) {
             db.child("recorridos").child(recorridoId).updateChildren(mapOf(
                 "latitudActual" to location.latitude,
@@ -241,11 +239,9 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             ))
         }
 
-        // 2. Actualizar Velocímetro
-        val velocidadKmH = (location.speed * 3.6).toInt() // Convertir m/s a km/h
+        val velocidadKmH = (location.speed * 3.6).toInt()
         tvActiveSpeed.text = velocidadKmH.toString()
 
-        // 3. Lógica de Paradas
         if (indicePuntoActual >= listaPuntos.size) return
 
         val puntoEsperado = listaPuntos[indicePuntoActual]
@@ -253,17 +249,15 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         Location.distanceBetween(location.latitude, location.longitude, puntoEsperado.latitud, puntoEsperado.longitud, resultados)
         val distanciaMetros = resultados[0]
 
-        // Actualizar UI con la distancia restante cada que nos movemos
         actualizarTarjetaProximaParada(distanciaMetros)
 
-        // 4. ¿Llegamos al punto?
         if (distanciaMetros <= rutaRadio) {
             registrarLlegadaEnFirebase(puntoEsperado)
             Toast.makeText(this, "¡Llegaste a ${puntoEsperado.nombre}!", Toast.LENGTH_SHORT).show()
             indicePuntoActual++
 
             if (indicePuntoActual < listaPuntos.size) {
-                actualizarTarjetaProximaParada(null) // Prepara el siguiente
+                actualizarTarjetaProximaParada(null)
             } else {
                 tvActiveNextStop.text = "Ruta Completada"
                 tvActiveDistance.text = "0m"
@@ -277,9 +271,11 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             val siguientePunto = listaPuntos[indicePuntoActual]
             tvActiveNextStop.text = siguientePunto.nombre
 
+            // Escuchar pasajeros esperando en esta parada
+            escucharPasajerosEnParada(siguientePunto.id)
+
             if (distanciaAproximada != null) {
                 tvActiveDistance.text = "${distanciaAproximada.toInt()}m"
-                // Calculo simple de tiempo: asumiendo 30km/h (8.3 m/s)
                 val segundos = distanciaAproximada / 8.3f
                 val minutos = (segundos / 60).toInt()
                 tvActiveTime.text = if (minutos < 1) "aprox. 1 min" else "aprox. $minutos min"
@@ -290,13 +286,40 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun escucharPasajerosEnParada(puntoId: String) {
+        if (puntoId == currentParaderoId || recorridoId.isEmpty()) return
+
+        // Quitar listener anterior
+        paraderoListener?.let { paraderoListenerRef?.removeEventListener(it) }
+
+        currentParaderoId = puntoId
+        paraderoListenerRef = db.child("recorridos").child(recorridoId).child("paraderos").child(puntoId)
+
+        paraderoListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val count = snapshot.child("pasajerosEsperando").getValue(Int::class.java) ?: 0
+                actualizarChipPasajeros(count)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        paraderoListenerRef!!.addValueEventListener(paraderoListener!!)
+    }
+
+    private fun actualizarChipPasajeros(count: Int) {
+        if (count > 0) {
+            layoutPasajerosEsperando.visibility = View.VISIBLE
+            tvPasajerosEsperando.text = if (count == 1) "1 persona esperando" else "$count personas esperando"
+        } else {
+            layoutPasajerosEsperando.visibility = View.GONE
+        }
+    }
+
     private fun registrarLlegadaEnFirebase(punto: PuntoRuta) {
         if (recorridoId.isEmpty()) return
 
         val ahora = System.currentTimeMillis()
         val tiempoDesdeAnterior = ahora - tiempoUltimoPunto
 
-        // Guardamos el registro del punto (Usando la misma lógica que tenías)
         val puntoRegistrado = mapOf(
             "puntoId" to punto.id,
             "nombre" to punto.nombre,
@@ -315,7 +338,7 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
             .setMessage("Digite la clave maestra")
             .setView(editText)
             .setPositiveButton("Validar") { _, _ ->
-                if (editText.text.toString().trim() == "1234") { // Usa tu Constante aquí
+                if (editText.text.toString().trim() == "1234") {
                     finalizarRecorrido(esAutomatico = false)
                 } else {
                     Toast.makeText(this, "Clave incorrecta", Toast.LENGTH_SHORT).show()
@@ -327,12 +350,9 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun mostrarAlertaSeguridad() {
         AlertDialog.Builder(this)
-            .setTitle("¡ATENCIÓN! SEGURIDAD PRIMERO")
-            .setMessage("¿Desea salir al Hub principal?\n\nLa ruta seguirá activa y podrá retomarla más tarde.\n\nRecuerde mantener las MANOS AL VOLANTE y solo manipular el teléfono cuando el vehículo esté detenido.")
-            .setPositiveButton("SÍ, SALIR AL HUB") { _, _ ->
-                // Al salir por seguridad, NO cancelamos la ruta. Solo volvemos al Hub.
-                salirSeguridad()
-            }
+            .setTitle("ATENCION - SEGURIDAD PRIMERO")
+            .setMessage("¿Desea salir al Hub principal?\n\nLa ruta seguirá activa y el GPS continuará compartiendo su posición con los pasajeros.\n\nRecuerde mantener las MANOS AL VOLANTE.")
+            .setPositiveButton("SÍ, SALIR AL HUB") { _, _ -> salirSeguridad() }
             .setNegativeButton("VOLVER A LA RUTA", null)
             .setIcon(android.R.drawable.ic_dialog_alert)
             .show()
@@ -340,17 +360,15 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun salirSeguridad() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        
-        // NO eliminamos ruta_actual de Firebase. 
-        // NO cambiamos el estado del recorrido.
-        // De esta forma, el Hub seguirá mostrando "Seguir Ruta".
-
-        Toast.makeText(this, "Navegación minimizada por seguridad", Toast.LENGTH_SHORT).show()
+        // El servicio en segundo plano CONTINÚA actualizando la posición
+        Toast.makeText(this, "GPS activo en segundo plano - los pasajeros siguen viendo su posición", Toast.LENGTH_LONG).show()
         finish()
     }
 
     private fun finalizarRecorrido(esAutomatico: Boolean) {
-        fusedLocationClient.removeLocationUpdates(locationCallback) // Apagar GPS
+        routeFinished = true
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+        detenerServicioSegundoPlano()
 
         if (recorridoId.isNotEmpty()) {
             val estadoFinal = if (esAutomatico) "finalizado_automatico" else "finalizado_manual"
@@ -359,16 +377,11 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
                 "estado" to estadoFinal
             )
             db.child("recorridos").child(recorridoId).updateChildren(actualizacion).addOnSuccessListener {
-
-                // ¡EL CAMBIO ESTÁ AQUÍ!
                 Toast.makeText(this, "Recorrido finalizado", Toast.LENGTH_SHORT).show()
-
-                // Lanzamos la pantalla de Resumen Final pasándole el ID del recorrido
                 val intent = Intent(this, ResumenRecorridoActivity::class.java)
                 intent.putExtra("recorridoId", recorridoId)
                 startActivity(intent)
-
-                finish() // Ahora sí cerramos la navegación
+                finish()
             }
         } else {
             finish()
@@ -380,5 +393,6 @@ class NavegacionActivaActivity : AppCompatActivity(), OnMapReadyCallback {
         if (::fusedLocationClient.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
+        paraderoListener?.let { paraderoListenerRef?.removeEventListener(it) }
     }
 }

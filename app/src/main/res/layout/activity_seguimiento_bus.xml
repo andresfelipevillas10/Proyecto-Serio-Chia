@@ -45,169 +45,306 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingTop="20dp"
-                android:paddingBottom="28dp">
+                android:layout_height="370dp">
 
-            <!-- Nombre ruta + badge EN VIVO -->
-            <RelativeLayout
+            <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingBottom="20dp">
 
-                <TextView
-                        android:id="@+id/tvSeguimientoRutaNombre"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="Cargando ruta..."
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_main"
-                        android:layout_toStartOf="@+id/badgeLiveSeguimiento"
-                        android:layout_marginEnd="8dp"
-                        android:layout_centerVertical="true"/>
+                <!-- Nombre ruta + badge EN VIVO -->
+                <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
+                    <TextView
+                            android:id="@+id/tvSeguimientoRutaNombre"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Cargando ruta..."
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_main"
+                            android:layout_toStartOf="@+id/badgeLiveSeguimiento"
+                            android:layout_marginEnd="8dp"
+                            android:layout_centerVertical="true"/>
+
+                    <TextView
+                            android:id="@+id/badgeLiveSeguimiento"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="● EN VIVO"
+                            android:background="@drawable/bg_live_badge"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:textColor="@color/primary_zenda"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"/>
+                </RelativeLayout>
+
+                <!-- Divider -->
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/input_stroke"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="14dp"/>
+
+                <!-- Label sección paradas -->
                 <TextView
-                        android:id="@+id/badgeLiveSeguimiento"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="● EN VIVO"
-                        android:background="@drawable/bg_live_badge"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:textColor="@color/primary_zenda"
-                        android:textSize="9sp"
+                        android:text="PRÓXIMAS PARADAS"
+                        android:textSize="10sp"
                         android:textStyle="bold"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"/>
-            </RelativeLayout>
+                        android:textColor="@color/text_variant"
+                        android:letterSpacing="0.12"/>
 
-            <!-- Divider -->
-            <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/input_stroke"
-                    android:layout_marginTop="14dp"
-                    android:layout_marginBottom="14dp"/>
-
-            <!-- Label sección paradas -->
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PRÓXIMAS PARADAS"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_variant"
-                    android:letterSpacing="0.12"/>
-
-            <!-- Parada 1: próxima (resaltada) -->
-            <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="12dp">
-
-                <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_location_on"
-                        app:tint="@color/primary_zenda"/>
-
+                <!-- Parada 1: próxima (resaltada) -->
                 <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:layout_marginStart="10dp">
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="12dp">
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_location_on"
+                            app:tint="@color/primary_zenda"/>
+
+                    <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="10dp">
+
+                        <TextView
+                                android:id="@+id/tvProximaParada"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Cargando..."
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/text_main"/>
+
+                        <TextView
+                                android:id="@+id/tvHoraEstimada"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Calculando tiempo..."
+                                android:textSize="12sp"
+                                android:textColor="@color/primary_zenda"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Parada 2 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="10dp">
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_stop"
+                            app:tint="@color/text_hint"/>
 
                     <TextView
-                            android:id="@+id/tvProximaParada"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvSiguienteParada"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="Cargando..."
-                            android:textSize="15sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:text="—"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_variant"
+                            android:layout_marginStart="10dp"/>
+                </LinearLayout>
+
+                <!-- Parada 3 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_stop"
+                            app:tint="@color/text_hint"/>
+
+                    <TextView
+                            android:id="@+id/tvTercerParada"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="—"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_variant"
+                            android:layout_marginStart="10dp"/>
+                </LinearLayout>
+
+                <!-- Botón: Cómo llegar al paradero -->
+                <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnComoLlegar"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="14dp"
+                        android:text="¿Cómo llegar al paradero?"
+                        android:textAllCaps="false"
+                        android:textStyle="bold"
+                        app:icon="@drawable/ic_navigation"
+                        app:iconGravity="textStart"
+                        app:cornerRadius="100dp"
+                        app:backgroundTint="@color/primary_zenda"/>
+
+                <!-- ── SECCIÓN ASIENTOS ─────────────────────────────── -->
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/input_stroke"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="12dp"/>
+
+                <!-- Fila info asientos -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_bus"
+                            app:tint="@color/text_variant"/>
+
+                    <TextView
+                            android:id="@+id/tvAsientosInfo"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="Cargando asientos..."
+                            android:textSize="13sp"
                             android:textColor="@color/text_main"/>
 
-                    <TextView
-                            android:id="@+id/tvHoraEstimada"
+                    <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnVerAsientos"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Calculando tiempo..."
-                            android:textSize="12sp"
+                            android:layout_height="36dp"
+                            android:text="Ver diagrama"
+                            android:textSize="11sp"
+                            android:textAllCaps="false"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            app:strokeColor="@color/primary_zenda"
+                            app:cornerRadius="100dp"
                             android:textColor="@color/primary_zenda"/>
                 </LinearLayout>
-            </LinearLayout>
 
-            <!-- Parada 2 -->
-            <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="10dp">
+                <!-- Botón: Estoy esperando / Bajé del bus -->
+                <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEsperandoParadero"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="10dp"
+                        android:text="Estoy esperando en un paradero"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        app:icon="@drawable/ic_person"
+                        app:iconGravity="textStart"
+                        app:strokeColor="@color/primary_zenda"
+                        app:cornerRadius="100dp"
+                        android:textColor="@color/primary_zenda"/>
 
-                <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_stop"
-                        app:tint="@color/text_hint"/>
-
-                <TextView
-                        android:id="@+id/tvSiguienteParada"
-                        android:layout_width="0dp"
+                <!-- Estado: esperando en paradero (visible solo cuando están esperando) -->
+                <LinearLayout
+                        android:id="@+id/layoutEstadoEsperando"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="—"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_variant"
-                        android:layout_marginStart="10dp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_passenger_chip"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:visibility="gone">
+
+                    <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_location_on"
+                            app:tint="@color/primary_zenda"/>
+
+                    <TextView
+                            android:id="@+id/tvParaderoEsperando"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="Esperando en: Paradero"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/primary_zenda"/>
+
+                    <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnYaSubiAlBus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="6dp"
+                            android:text="Ya subi"
+                            android:textSize="11sp"
+                            android:textAllCaps="false"
+                            app:cornerRadius="100dp"
+                            app:backgroundTint="@color/primary_zenda"
+                            android:textColor="@color/white"/>
+
+                    <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCancelarEspera"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="4dp"
+                            android:text="Cancelar"
+                            android:textSize="11sp"
+                            android:textAllCaps="false"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            app:strokeColor="@color/error"
+                            app:cornerRadius="100dp"
+                            android:textColor="@color/error"/>
+                </LinearLayout>
+
+                <!-- Botón: Reportar bus lleno -->
+                <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReportarBusLleno"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:text="Reportar bus lleno"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        app:icon="@drawable/ic_warning"
+                        app:iconGravity="textStart"
+                        app:strokeColor="@color/error"
+                        app:cornerRadius="100dp"
+                        android:textColor="@color/error"/>
+
             </LinearLayout>
-
-            <!-- Parada 3 -->
-            <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="8dp">
-
-                <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_stop"
-                        app:tint="@color/text_hint"/>
-
-                <TextView
-                        android:id="@+id/tvTercerParada"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="—"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_variant"
-                        android:layout_marginStart="10dp"/>
-            </LinearLayout>
-
-            <!-- Botón: Cómo llegar al paradero -->
-            <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnComoLlegar"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="16dp"
-                    android:text="¿Cómo llegar al paradero?"
-                    android:textAllCaps="false"
-                    android:textStyle="bold"
-                    app:icon="@drawable/ic_navigation"
-                    app:iconGravity="textStart"
-                    app:cornerRadius="100dp"
-                    app:backgroundTint="@color/primary_zenda"/>
-
-        </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
     </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
