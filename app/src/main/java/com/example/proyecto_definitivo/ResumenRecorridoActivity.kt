@@ -41,7 +41,7 @@ class ResumenRecorridoActivity : AppCompatActivity() {
         recorridoId = intent.getStringExtra("recorridoId") ?: ""
 
         if (recorridoId.isEmpty()) {
-            Toast.makeText(this, "Error: No se encontró el recorrido", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_recorrido_not_found), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -61,9 +61,10 @@ class ResumenRecorridoActivity : AppCompatActivity() {
     }
 
     private fun cargarResumenGeneral() {
-        db.child("recorridos").child(recorridoId).get().addOnSuccessListener { snapshot ->
+        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.child("recorridos").child(currentUserId).child(recorridoId).get().addOnSuccessListener { snapshot ->
             if (snapshot.exists()) {
-                val nombre = snapshot.child("rutaNombre").getValue(String::class.java) ?: "Ruta Desconocida"
+                val nombre = snapshot.child("rutaNombre").getValue(String::class.java) ?: getString(R.string.unknown_route)
 
                 // Calculamos el tiempo total si no está guardado como tal
                 val inicio = snapshot.child("inicioTiempo").getValue(Long::class.java) ?: 0L
@@ -78,21 +79,24 @@ class ResumenRecorridoActivity : AppCompatActivity() {
                 tvResumenTiempoTotal.text = formatearDuracion(tiempoTotal)
             }
         }.addOnFailureListener {
-            Toast.makeText(this, "No se pudo cargar el resumen general", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_loading_summary), Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun cargarPuntosCompletados() {
-        db.child("recorridos").child(recorridoId).child("puntosRegistrados").get().addOnSuccessListener { snapshot ->
+        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.child("recorridos").child(currentUserId).child(recorridoId).child("puntosRegistrados").get().addOnSuccessListener { snapshot ->
             listaPuntosCompletados.clear()
 
             for (puntoSnap in snapshot.children) {
                 // Mapeamos los datos de Firebase a la clase PuntoSeguimientoUI que necesita el Adapter
                 val puntoUI = PuntoSeguimientoUI(
                     puntoId = puntoSnap.child("puntoId").getValue(String::class.java) ?: "",
-                    nombre = puntoSnap.child("nombre").getValue(String::class.java) ?: "Punto Desconocido",
+                    nombre = puntoSnap.child("nombre").getValue(String::class.java) ?: getString(R.string.unknown_point),
                     orden = puntoSnap.child("orden").getValue(Int::class.java) ?: 0,
                     tipo = puntoSnap.child("tipo").getValue(String::class.java) ?: "marca",
+                    latitud = puntoSnap.child("latitud").getValue(Double::class.java) ?: 0.0,
+                    longitud = puntoSnap.child("longitud").getValue(Double::class.java) ?: 0.0,
                     completado = true, // Si está en este nodo de BD, es porque el GPS lo detectó
                     tiempoDesdeAnteriorMs = puntoSnap.child("tiempoDesdeAnteriorMs").getValue(Long::class.java) ?: 0L,
                     tiempoAcumuladoRutaMs = puntoSnap.child("tiempoAcumuladoRutaMs").getValue(Long::class.java) ?: 0L
@@ -105,7 +109,7 @@ class ResumenRecorridoActivity : AppCompatActivity() {
             adapter.notifyDataSetChanged()
 
         }.addOnFailureListener {
-            Toast.makeText(this, "No se pudo cargar el historial de paradas", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.error_loading_stops), Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -36,42 +36,7 @@
                 app:layout_constraintBottom_toBottomOf="@id/btnBack"
                 app:layout_constraintStart_toEndOf="@id/btnBack" />
 
-        <!-- ── Avatar con botón de cámara ── -->
-        <FrameLayout
-                android:id="@+id/profileContainer"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
-                android:layout_marginTop="20dp"
-                app:layout_constraintTop_toBottomOf="@id/btnBack"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
 
-            <View
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/bg_profile_circle" />
-
-            <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_person"
-                    app:tint="@color/text_hint"
-                    android:contentDescription="Foto de perfil" />
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/btnPickPhoto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:src="@drawable/ic_camera"
-                    android:contentDescription="Cambiar foto"
-                    app:fabCustomSize="28dp"
-                    app:maxImageSize="14dp"
-                    app:backgroundTint="@color/primary_zenda"
-                    app:tint="#FFFFFF"
-                    app:elevation="4dp" />
-        </FrameLayout>
 
         <!-- ── Título y subtítulo ── -->
         <TextView
@@ -83,7 +48,7 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_main"
                 android:layout_marginTop="12dp"
-                app:layout_constraintTop_toBottomOf="@id/profileContainer"
+                app:layout_constraintTop_toBottomOf="@id/btnBack"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
@@ -144,6 +109,7 @@
                         android:layout_marginEnd="4dp">
                     <TextView style="@style/LabelStyle" android:text="NOMBRE" />
                     <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilNombre"
                             style="@style/InputLayout"
                             android:layout_marginTop="4dp">
                         <com.google.android.material.textfield.TextInputEditText
@@ -162,6 +128,7 @@
                         android:layout_marginStart="4dp">
                     <TextView style="@style/LabelStyle" android:text="APELLIDO" />
                     <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilApellido"
                             style="@style/InputLayout"
                             android:layout_marginTop="4dp">
                         <com.google.android.material.textfield.TextInputEditText
@@ -177,6 +144,7 @@
             <TextView style="@style/LabelStyle" android:text="TELÉFONO"
                     android:layout_marginTop="12dp" />
             <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilTelefono"
                     style="@style/InputLayout"
                     android:layout_marginTop="4dp"
                     app:startIconDrawable="@drawable/ic_phone"
@@ -192,6 +160,7 @@
             <TextView style="@style/LabelStyle" android:text="DIRECCIÓN"
                     android:layout_marginTop="12dp" />
             <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilDireccion"
                     style="@style/InputLayout"
                     android:layout_marginTop="4dp"
                     app:startIconDrawable="@drawable/ic_location_on"
@@ -207,6 +176,7 @@
             <TextView style="@style/LabelStyle" android:text="CORREO ELECTRÓNICO"
                     android:layout_marginTop="12dp" />
             <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilEmail"
                     style="@style/InputLayout"
                     android:layout_marginTop="4dp"
                     app:startIconDrawable="@drawable/ic_mail"
@@ -253,6 +223,7 @@
                         android:layout_marginEnd="4dp">
                     <TextView style="@style/LabelStyle" android:text="NO. BUS" />
                     <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilNoBus"
                             style="@style/InputLayout"
                             android:layout_marginTop="4dp"
                             app:startIconDrawable="@drawable/ic_bus"
@@ -284,6 +255,7 @@
                             app:boxCornerRadiusTopEnd="12dp"
                             app:boxCornerRadiusBottomStart="12dp"
                             app:boxCornerRadiusBottomEnd="12dp"
+                            app:endIconMode="dropdown_menu"
                             app:startIconDrawable="@drawable/ic_schedule"
                             app:startIconTint="@color/text_hint">
                         <AutoCompleteTextView
@@ -292,6 +264,9 @@
                                 android:layout_height="48dp"
                                 android:hint="Mañana"
                                 android:inputType="none"
+                                android:focusable="false"
+                                android:cursorVisible="false"
+                                android:dropDownWidth="match_parent"
                                 android:textSize="14sp"
                                 android:paddingStart="0dp" />
                     </com.google.android.material.textfield.TextInputLayout>

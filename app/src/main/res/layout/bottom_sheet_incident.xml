@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#121212"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:letterSpacing="0.1"
+            android:text="EMERGENCY REPORT"
+            android:textAlignment="center"
+            android:textColor="#D32F2F"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFuelAccident"
+                android:layout_width="0dp"
+                android:layout_height="140dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="ACCIDENTE\nGRAVE"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:backgroundTint="#B71C1C"
+                app:cornerRadius="16dp"
+                app:icon="@android:drawable/ic_dialog_alert"
+                app:iconGravity="textTop"
+                app:iconSize="36dp"
+                app:iconTint="#FFFFFF" />
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLightningMech"
+                android:layout_width="0dp"
+                android:layout_height="140dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="FALLA\nMECÁNICA"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:backgroundTint="#FBC02D"
+                app:cornerRadius="16dp"
+                app:icon="@android:drawable/ic_menu_manage"
+                app:iconGravity="textTop"
+                app:iconSize="36dp"
+                app:iconTint="#000000" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSeekDestroy"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="16dp"
+            android:letterSpacing="0.1"
+            android:text="SEEK &amp; DESTROY\n(SOLICITAR REEMPLAZO)"
+            android:textColor="#D32F2F"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="#000000"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_delete"
+            app:iconGravity="textStart"
+            app:iconSize="32dp"
+            app:iconTint="#D32F2F"
+            app:strokeColor="#D32F2F"
+            app:strokeWidth="2dp" />
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAbort"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="8dp"
+            android:text="ABORTAR (VOLVER AL MAPA)"
+            android:textColor="#757575"
+            android:textStyle="bold" />
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSOS"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="16dp"
+            android:text="LLAMAR EMERGENCIAS (112)"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:backgroundTint="#B71C1C"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_menu_call"
+            app:iconGravity="textStart"
+            app:iconSize="32dp" />
+
+</LinearLayout>

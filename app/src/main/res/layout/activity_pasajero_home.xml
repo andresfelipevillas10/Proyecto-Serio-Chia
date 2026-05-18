@@ -5,7 +5,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/bg_zenda">
-
     <!-- ── Top bar ── -->
     <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/topBar"
@@ -16,7 +15,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
-
         <ImageView
                 android:id="@+id/ivLogo"
                 android:layout_width="24dp"
@@ -26,7 +24,6 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"/>
-
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -38,7 +35,6 @@
                 app:layout_constraintTop_toTopOf="@id/ivLogo"
                 app:layout_constraintBottom_toBottomOf="@id/ivLogo"
                 app:layout_constraintStart_toEndOf="@id/ivLogo"/>
-
         <TextView
                 android:id="@+id/tvBadgePasajero"
                 android:layout_width="wrap_content"
@@ -54,7 +50,6 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
     <!-- ── Barra tricolor ── -->
     <LinearLayout
             android:id="@+id/identityBar"
@@ -71,7 +66,6 @@
         <View android:layout_width="0dp" android:layout_height="match_parent"
                 android:layout_weight="1" android:background="@color/accent_red"/>
     </LinearLayout>
-
     <!-- ── Scroll principal ── -->
     <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -80,13 +74,12 @@
             app:layout_constraintBottom_toTopOf="@id/bottomNavPasajero"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
-
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
-
+                android:padding="20dp"
+                android:paddingBottom="100dp">
             <!-- Saludo -->
             <TextView
                     android:id="@+id/tvGreeting"
@@ -96,7 +89,6 @@
                     android:textSize="26sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_main"/>
-
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -104,7 +96,6 @@
                     android:textColor="@color/text_variant"
                     android:textSize="14sp"
                     android:layout_marginTop="2dp"/>
-
             <!-- Título sección rutas -->
             <TextView
                     android:layout_width="wrap_content"
@@ -115,7 +106,6 @@
                     android:textColor="@color/text_main"
                     android:layout_marginTop="24dp"
                     android:layout_marginBottom="12dp"/>
-
             <!-- Estado vacío -->
             <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardEmptyState"
@@ -127,20 +117,17 @@
                     app:cardBackgroundColor="@color/surface_container_low"
                     app:strokeColor="@color/input_stroke"
                     app:strokeWidth="1dp">
-
                 <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:padding="32dp"
                         android:gravity="center">
-
                     <ImageView
                             android:layout_width="52dp"
                             android:layout_height="52dp"
                             android:src="@drawable/ic_bus"
                             app:tint="@color/text_hint"/>
-
                     <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -150,7 +137,6 @@
                             android:textStyle="bold"
                             android:gravity="center"
                             android:layout_marginTop="12dp"/>
-
                     <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -161,7 +147,6 @@
                             android:layout_marginTop="6dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
             <!-- Lista de recorridos activos -->
             <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvRutasSalientes"
@@ -169,10 +154,8 @@
                     android:layout_height="wrap_content"
                     android:nestedScrollingEnabled="false"
                     android:visibility="gone"/>
-
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
     <!-- ── Bottom Nav ── -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNavPasajero"
@@ -189,5 +172,4 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

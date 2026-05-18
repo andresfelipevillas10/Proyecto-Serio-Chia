@@ -41,7 +41,7 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toEndOf="@id/ivConfigRouteIcon"
-                app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
+                app:layout_constraintEnd_toStartOf="@id/btnPinRoute"
                 app:layout_constraintTop_toTopOf="@id/ivConfigRouteIcon" />
 
         <TextView
@@ -54,8 +54,21 @@
                 android:textColor="#737780"
                 android:textSize="12sp"
                 app:layout_constraintStart_toEndOf="@id/ivConfigRouteIcon"
-                app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
+                app:layout_constraintEnd_toStartOf="@id/btnPinRoute"
                 app:layout_constraintTop_toBottomOf="@id/tvConfigRouteName" />
+
+        <ImageButton
+                android:id="@+id/btnPinRoute"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_circle_green"
+                android:src="@drawable/ic_stars"
+                app:tint="#005236"
+                android:contentDescription="Fijar como frecuente"
+                app:layout_constraintEnd_toStartOf="@id/btnDeleteRoute"
+                app:layout_constraintTop_toTopOf="@id/ivConfigRouteIcon"
+                app:layout_constraintBottom_toBottomOf="@id/ivConfigRouteIcon" />
 
         <ImageButton
                 android:id="@+id/btnDeleteRoute"

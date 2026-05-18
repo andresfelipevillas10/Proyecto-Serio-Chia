@@ -39,6 +39,9 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var recyclerPuntos: androidx.recyclerview.widget.RecyclerView
 
+    // 🔥 NUEVO: El botón del gatillo
+    private lateinit var btnFijarPunto: MaterialButton
+
     private val db = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
 
@@ -73,6 +76,9 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         tvContadorPuntos = findViewById(R.id.tvContadorPuntos)
         bottomNav = findViewById(R.id.bottomNav)
         recyclerPuntos = findViewById(R.id.recyclerPuntosConfiguracion)
+
+        // 🔥 NUEVO: Enlazar el botón
+        btnFijarPunto = findViewById(R.id.btnFijarPunto)
     }
 
     private fun setupBottomNav() {
@@ -132,11 +138,9 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         googleMap = map
         googleMap.uiSettings.isZoomControlsEnabled = true
         googleMap.uiSettings.isCompassEnabled = true
-        googleMap.uiSettings.isMapToolbarEnabled = true
+        googleMap.uiSettings.isMapToolbarEnabled = false // 🔥 Desactivado para limpiar la UI
 
-        // Esto empuja los controles de Google (botón de ubicación, logo de Google)
-// hacia adentro para que no se solapen con tu UI.
-        googleMap.setPadding(0, 150, 0, 0) // (izquierda, arriba, derecha, abajo) en píxeles
+        googleMap.setPadding(0, 150, 0, 0)
 
         habilitarMiUbicacion()
         googleMap.uiSettings.isMyLocationButtonEnabled = true
@@ -144,33 +148,26 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         val ubicacionInicial = LatLng(4.8615, -74.0510) // Centro de Chía
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacionInicial, 14f))
 
-        googleMap.setOnMapClickListener { latLng ->
-            mostrarDialogoAgregarPunto(latLng)
+        // 🔥 SE ELIMINÓ googleMap.setOnMapClickListener
+
+        // 🔥 NUEVA LÓGICA: Capturar el centro exacto al presionar el botón
+        btnFijarPunto.setOnClickListener {
+            val targetPosition: LatLng = googleMap.cameraPosition.target
+            mostrarDialogoAgregarPunto(targetPosition)
         }
 
         cargarPuntosRuta()
     }
 
     private fun habilitarMiUbicacion() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            // SI TENEMOS PERMISO: Se activa el punto azul Y el botón
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             googleMap.isMyLocationEnabled = true
         } else {
-            // SI NO TENEMOS PERMISO: Hay que pedirlo
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1000
-            )
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1000)
         }
     }
-    // --- LA MAGIA NUEVA DEL DIÁLOGO ---
+
     private fun mostrarDialogoAgregarPunto(latLng: LatLng, puntoExistente: PuntoRuta? = null) {
-        // Inflamos tu nuevo diseño con bordes redondeados
         val vista = layoutInflater.inflate(R.layout.dialog_nuevo_punto, null)
 
         val etNombre = vista.findViewById<EditText>(R.id.etNombrePunto)
@@ -179,10 +176,9 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         val etLng = vista.findViewById<EditText>(R.id.etLongitudPunto)
         val spTipo = vista.findViewById<Spinner>(R.id.spTipoPunto)
 
-        // Botones del nuevo diálogo
         val btnCerrar = vista.findViewById<ImageButton>(R.id.btnCerrarDialog)
         val btnGuardar = vista.findViewById<MaterialButton>(R.id.btnGuardarPunto)
-        val btnActualizarGps = vista.findViewById<View>(R.id.btnActualizarUbicacion) // El LinearLayout
+        val btnActualizarGps = vista.findViewById<View>(R.id.btnActualizarUbicacion)
 
         val tipos = listOf("origen", "marca", "fin")
         spTipo.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, tipos)
@@ -197,12 +193,10 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         etLng.setText(puntoExistente?.longitud?.toString() ?: latLng.longitude.toString())
         puntoExistente?.let { spTipo.setSelection(tipos.indexOf(it.Tipo)) }
 
-        // Creamos el diálogo
         val dialog = AlertDialog.Builder(this)
             .setView(vista)
             .create()
 
-        // TRUCO DE DISEÑADOR: Hacemos el fondo transparente para que se vea el MaterialCardView curvo
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         btnCerrar.setOnClickListener { dialog.dismiss() }
@@ -218,8 +212,8 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
             val lat = etLat.text.toString().toDoubleOrNull() ?: latLng.latitude
             val lng = etLng.text.toString().toDoubleOrNull() ?: latLng.longitude
 
-            if (nombre.isEmpty()) { etNombre.error = "Falta nombre"; return@setOnClickListener }
-            if (orden <= 0) { etOrden.error = "Orden inválido"; return@setOnClickListener }
+            if (nombre.isEmpty()) { etNombre.error = getString(R.string.error_missing_name); return@setOnClickListener }
+            if (orden <= 0) { etOrden.error = getString(R.string.error_invalid_order); return@setOnClickListener }
 
             validarYGuardarPunto(nombre, lat, lng, orden, tipo, dialog, puntoExistente?.id)
         }
@@ -227,7 +221,6 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
         dialog.show()
     }
 
-    // Tu validación intacta
     private fun validarYGuardarPunto(nombre: String, lat: Double, lng: Double, orden: Int, tipo: String, dialog: AlertDialog, idParaEditar: String?) {
         val currentUserId = auth.currentUser?.uid ?: return
         val otrosPuntos = listaPuntos.filter { it.id != idParaEditar }
@@ -266,7 +259,6 @@ class ConfigurarPuntosRuta : AppCompatActivity(), OnMapReadyCallback {
 
             listaPuntos.sortBy { it.orden }
 
-            // ACTUALIZAMOS EL CONTADOR DE TU NUEVO DISEÑO
             tvContadorPuntos.text = "${listaPuntos.size} PUNTOS"
 
             val recycler = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerPuntosConfiguracion)

@@ -22,10 +22,6 @@ class SeguimientoBusActivity : AppCompatActivity(), OnMapReadyCallback {
     private val db = FirebaseDatabase.getInstance().reference
 
     private lateinit var tvRutaNombre: TextView
-    private lateinit var tvProximaParada: TextView
-    private lateinit var tvSiguienteParada: TextView
-    private lateinit var tvTercerParada: TextView
-    private lateinit var tvHoraEstimada: TextView
     private lateinit var btnBack: ImageButton
     private lateinit var btnComoLlegar: MaterialButton
 
@@ -88,10 +84,6 @@ class SeguimientoBusActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun bindViews() {
         tvRutaNombre = findViewById(R.id.tvSeguimientoRutaNombre)
-        tvProximaParada = findViewById(R.id.tvProximaParada)
-        tvSiguienteParada = findViewById(R.id.tvSiguienteParada)
-        tvTercerParada = findViewById(R.id.tvTercerParada)
-        tvHoraEstimada = findViewById(R.id.tvHoraEstimada)
         btnBack = findViewById(R.id.btnBackSeguimiento)
         btnComoLlegar = findViewById(R.id.btnComoLlegar)
         tvAsientosInfo = findViewById(R.id.tvAsientosInfo)
@@ -220,23 +212,13 @@ class SeguimientoBusActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onCancelled(error: DatabaseError) {}
         }
 
-        db.child("recorridos").child(recorridoId).addValueEventListener(listener)
+        db.child("recorridos").child(conductorId).child(recorridoId).addValueEventListener(listener)
         recorridoListener = listener
     }
 
     private fun actualizarPanelParadas() {
         if (listaPuntos.isEmpty()) return
-
-        val proxima = listaPuntos.getOrNull(indicePuntoActual)
-        val segunda = listaPuntos.getOrNull(indicePuntoActual + 1)
-        val tercera = listaPuntos.getOrNull(indicePuntoActual + 2)
-
-        tvProximaParada.text = proxima?.nombre ?: "Última parada"
-        tvSiguienteParada.text = segunda?.nombre ?: "—"
-        tvTercerParada.text = tercera?.nombre ?: "—"
-
-        val minutosEstimados = (indicePuntoActual + 1) * 5
-        tvHoraEstimada.text = "Aprox. $minutosEstimados min desde origen"
+        // UI removed in current layout
     }
 
     // ── Asientos ──────────────────────────────────────────────────────────────────
@@ -522,7 +504,7 @@ class SeguimientoBusActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun abrirNavegacion() {
         if (nearestStopLat == 0.0 && nearestStopLng == 0.0) {
-            Toast.makeText(this, "Cargando información de la ruta...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.loading_route_info), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -546,7 +528,7 @@ class SeguimientoBusActivity : AppCompatActivity(), OnMapReadyCallback {
             decrementarEsperando(paraderoEsperandoId)
         }
         recorridoListener?.let {
-            db.child("recorridos").child(recorridoId).removeEventListener(it)
+            db.child("recorridos").child(conductorId).child(recorridoId).removeEventListener(it)
         }
     }
 }

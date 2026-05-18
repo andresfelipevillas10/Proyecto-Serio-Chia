@@ -11,6 +11,10 @@ data class Recorrido(
     var latitudActual: Double = 0.0,
     var longitudActual: Double = 0.0,
     var estado: String = "en_proceso",
+    var motivoPausa: String = "",
+    var timestampPausa: Long = 0L,
+    var userIdPausa: String = "",
+    var motivoTermino: String = "",
     var capacidadTotal: Int = 30,
     var asientosOcupados: Int = 0,
     var reporteFullBus: Boolean = false

@@ -9,26 +9,34 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.*
 
 class CrearRuta : AppCompatActivity() {
 
     private lateinit var etNombreRuta: TextInputEditText
     private lateinit var etDescripcionRuta: TextInputEditText
+    private lateinit var cgDias: ChipGroup
     private lateinit var sbRadio: SeekBar
     private lateinit var tvRadioValor: TextView
+    private lateinit var etFechaSalida: TextInputEditText
     private lateinit var etHoraSalida: TextInputEditText
     private lateinit var etHoraLlegada: TextInputEditText
+    private lateinit var etCupoSentados: TextInputEditText
+    private lateinit var etCupoPie: TextInputEditText
     private lateinit var tvGuiaDescripcion: TextView
     private lateinit var ivGuiaIcon: ImageView
     private lateinit var btnSiguiente: MaterialButton
     private lateinit var btnBack: ImageButton
-    private lateinit var bottomNav: BottomNavigationView
 
     private val db = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
@@ -38,53 +46,24 @@ class CrearRuta : AppCompatActivity() {
         setContentView(R.layout.activity_crear_ruta_paso1)
 
         initViews()
-        setupBottomNav()
         setupListeners()
     }
 
     private fun initViews() {
         etNombreRuta = findViewById(R.id.etNombreRuta)
         etDescripcionRuta = findViewById(R.id.etDescRuta)
+        cgDias = findViewById(R.id.cgDias)
         sbRadio = findViewById(R.id.sbRadio)
         tvRadioValor = findViewById(R.id.tvRadioValor)
+        etFechaSalida = findViewById(R.id.etFechaSalida)
         etHoraSalida = findViewById(R.id.etHoraSalida)
         etHoraLlegada = findViewById(R.id.etHoraLlegada)
+        etCupoSentados = findViewById(R.id.etCupoSentados)
+        etCupoPie = findViewById(R.id.etCupoPie)
         tvGuiaDescripcion = findViewById(R.id.tvGuiaDescripcion)
         ivGuiaIcon = findViewById(R.id.ivGuiaIcon)
         btnSiguiente = findViewById(R.id.btnSiguiente)
         btnBack = findViewById(R.id.btnBack)
-        bottomNav = findViewById(R.id.bottomNav)
-    }
-
-    private fun setupBottomNav() {
-        bottomNav.selectedItemId = R.id.nav_home
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, HomeRutasActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                    })
-                    overridePendingTransition(0, 0)
-                    true
-                }
-                R.id.nav_routes -> {
-                    startActivity(Intent(this, ListaRutas::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                    })
-                    overridePendingTransition(0, 0)
-                    true
-                }
-                R.id.nav_stats -> {
-                    Toast.makeText(this, getString(R.string.stats_development), Toast.LENGTH_SHORT).show()
-                    false
-                }
-                R.id.nav_settings -> {
-                    Toast.makeText(this, getString(R.string.opening_profile), Toast.LENGTH_SHORT).show()
-                    false
-                }
-                else -> false
-            }
-        }
     }
 
     private fun setupListeners() {
@@ -122,6 +101,7 @@ class CrearRuta : AppCompatActivity() {
     }
 
     private fun setupTimePickers() {
+        etFechaSalida.setOnClickListener { mostrarDatePicker() }
         etHoraSalida.setOnClickListener {
             mostrarTimePicker(etHoraSalida)
         }
@@ -130,16 +110,49 @@ class CrearRuta : AppCompatActivity() {
         }
     }
 
+    private fun collectSelectedDays(): List<String> {
+        val selected = mutableListOf<String>()
+        for (i in 0 until cgDias.childCount) {
+            val chip = cgDias.getChildAt(i) as Chip
+            if (chip.isChecked) {
+                selected.add(chip.text.toString())
+            }
+        }
+        return selected
+    }
+
+    private fun mostrarDatePicker() {
+        val picker = MaterialDatePicker.Builder.datePicker()
+            .setTitleText("Seleccionar Fecha")
+            .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+            .build()
+
+        picker.addOnPositiveButtonClickListener { selection ->
+            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            etFechaSalida.setText(sdf.format(Date(selection)))
+        }
+        picker.show(supportFragmentManager, "DATE_PICKER")
+    }
+
     private fun mostrarTimePicker(editText: TextInputEditText) {
         val c = Calendar.getInstance()
         val hour = c.get(Calendar.HOUR_OF_DAY)
         val minute = c.get(Calendar.MINUTE)
 
-        val timePickerDialog = TimePickerDialog(this, { _, selectedHour, selectedMinute ->
-            val formattedTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_24H)
+            .setHour(hour)
+            .setMinute(minute)
+            .setTitleText("Ingrese Hora (HH:mm)")
+            .setInputMode(MaterialTimePicker.INPUT_MODE_KEYBOARD) // ⌨️ FUERZA MODO TECLADO
+            .build()
+
+        picker.addOnPositiveButtonClickListener {
+            val formattedTime = String.format("%02d:%02d", picker.hour, picker.minute)
             editText.setText(formattedTime)
-        }, hour, minute, true)
-        timePickerDialog.show()
+        }
+
+        picker.show(supportFragmentManager, "MATERIAL_TIME_PICKER")
     }
 
     private fun guardarRuta() {
@@ -196,7 +209,10 @@ class CrearRuta : AppCompatActivity() {
             radioDeteccion = radio,
             creadaEn = System.currentTimeMillis(),
             horaSalida = horaSalida,
-            horaLlegada = horaLlegada
+            horaLlegada = horaLlegada,
+            diasOperacion = collectSelectedDays(),
+            cupoSentados = etCupoSentados.text.toString().toIntOrNull() ?: 40,
+            cupoPie = etCupoPie.text.toString().toIntOrNull() ?: 15
         )
 
         rutaRef.setValue(ruta)

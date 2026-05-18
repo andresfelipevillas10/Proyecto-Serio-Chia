@@ -47,6 +47,35 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/topBarConfig" />
 
+    <!-- Estado de Sincronización -->
+    <LinearLayout
+        android:id="@+id/syncStatusContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvMisRutasTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progressSync"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="12dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvSyncStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sync_status_idle"
+            android:textColor="#666666"
+            android:textSize="12sp" />
+    </LinearLayout>
+
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -65,11 +94,11 @@
             android:id="@+id/rvConfigRutas"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="8dp"
             android:paddingHorizontal="24dp"
             android:clipToPadding="false"
             android:paddingBottom="100dp"
-            app:layout_constraintTop_toBottomOf="@id/tvMisRutasTitle"
+            app:layout_constraintTop_toBottomOf="@id/syncStatusContainer"
             app:layout_constraintBottom_toBottomOf="parent"
             tools:listitem="@layout/item_config_route_card" />
 
@@ -87,20 +116,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottomNav"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_bottom_nav"
-            app:elevation="8dp"
-            app:itemIconTint="@color/nav_item_color_selector"
-            app:itemTextColor="@color/nav_item_color_selector"
-            app:menu="@menu/bottom_nav_menu"
-            app:labelVisibilityMode="labeled"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

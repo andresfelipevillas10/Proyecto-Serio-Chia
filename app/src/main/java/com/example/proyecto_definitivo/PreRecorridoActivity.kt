@@ -73,16 +73,16 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
         // ¡EL GRAN BOTÓN INICIAR!
         btnStartDrivingMode.setOnClickListener {
             if (listaPuntos.isEmpty()) {
-                Toast.makeText(this, "Esta ruta no tiene puntos configurados.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.error_route_no_points), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 1. Preparamos el terreno en la Base de Datos
-            val recorridosRef = db.child("recorridos").push()
-            val nuevoRecorridoId = recorridosRef.key ?: ""
-
             // Obtenemos el ID del conductor actual (Si aún no tienes el Auth listo, le ponemos un dummy temporal)
             val conductorId = FirebaseAuth.getInstance().currentUser?.uid ?: "conductor_demo_123"
+
+            // 1. Preparamos el terreno en la Base de Datos
+            val recorridosRef = db.child("recorridos").child(conductorId).push()
+            val nuevoRecorridoId = recorridosRef.key ?: ""
 
             // 2. Creamos el objeto con tu nueva clase
             val recorridoDeHoy = Recorrido(
@@ -120,7 +120,7 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
                         override fun onComplete(databaseError: DatabaseError?, committed: Boolean, dataSnapshot: DataSnapshot?) {}
                     })
 
-                Toast.makeText(this, "¡Recorrido Iniciado!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.route_started), Toast.LENGTH_SHORT).show()
 
                 val intent = Intent(this, NavegacionActivaActivity::class.java)
                 intent.putExtra("rutaId", rutaId)
@@ -132,7 +132,7 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
                 finish()
 
             }.addOnFailureListener {
-                Toast.makeText(this, "Error de red al iniciar", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.error_network_start), Toast.LENGTH_SHORT).show()
             }
         }
     } // <-- Aquí termina correctamente el onCreate
@@ -172,7 +172,7 @@ class PreRecorridoActivity : AppCompatActivity(), OnMapReadyCallback {
                 dibujarRutaEnMapa()
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Error al cargar los puntos de la ruta", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.error_loading_route_points), Toast.LENGTH_SHORT).show()
             }
     }
 

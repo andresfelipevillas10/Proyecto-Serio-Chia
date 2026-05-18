@@ -50,10 +50,19 @@ class PasajeroHomeActivity : AppCompatActivity() {
 
     private fun loadPassengerName() {
         val uid = auth.currentUser?.uid ?: return
-        db.child("users").child("pasajeros").child(uid).child("nombre")
+        db.child("pasajeros").child(uid).child("nombre")
             .get().addOnSuccessListener { snapshot ->
-                val nombre = snapshot.getValue(String::class.java) ?: "Pasajero"
-                tvGreeting.text = getString(R.string.hello_user, nombre)
+                val nombre = snapshot.getValue(String::class.java)
+
+                if (!nombre.isNullOrBlank()) {
+                    tvGreeting.text = getString(R.string.hello_user, nombre)
+                } else {
+                    db.child("users").child(uid).child("nombre")
+                        .get().addOnSuccessListener { fallbackSnapshot ->
+                            val fallbackName = fallbackSnapshot.getValue(String::class.java) ?: "Pasajero"
+                            tvGreeting.text = getString(R.string.hello_user, fallbackName)
+                        }
+                }
             }
     }
 
@@ -76,13 +85,15 @@ class PasajeroHomeActivity : AppCompatActivity() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 listaRecorridos.clear()
 
-                for (recorridoSnap in snapshot.children) {
-                    val recorrido = recorridoSnap.getValue(Recorrido::class.java) ?: continue
-                    if (recorrido.estado == "en_proceso") {
-                        if (recorrido.id.isEmpty()) {
-                            recorrido.id = recorridoSnap.key ?: continue
+                for (conductorSnap in snapshot.children) {
+                    for (recorridoSnap in conductorSnap.children) {
+                        val recorrido = recorridoSnap.getValue(Recorrido::class.java) ?: continue
+                        if (recorrido.estado == "en_proceso") {
+                            if (recorrido.id.isEmpty()) {
+                                recorrido.id = recorridoSnap.key ?: continue
+                            }
+                            listaRecorridos.add(recorrido)
                         }
-                        listaRecorridos.add(recorrido)
                     }
                 }
 
@@ -116,8 +127,8 @@ class PasajeroHomeActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_passenger_home -> true
                 R.id.nav_passenger_profile -> {
-                    Toast.makeText(this, "Perfil en desarrollo", Toast.LENGTH_SHORT).show()
-                    false
+                    startActivity(Intent(this, PerfilActivity::class.java))
+                    true
                 }
                 else -> false
             }
