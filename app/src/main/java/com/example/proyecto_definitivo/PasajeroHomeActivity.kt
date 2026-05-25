@@ -15,8 +15,13 @@ import com.google.firebase.database.*
 
 class PasajeroHomeActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_GUEST_MODE = "GUEST_MODE"
+    }
+
     private lateinit var auth: FirebaseAuth
     private lateinit var db: DatabaseReference
+    private var isGuestMode = false
 
     private lateinit var tvGreeting: TextView
     private lateinit var rvRutasSalientes: RecyclerView
@@ -31,11 +36,16 @@ class PasajeroHomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pasajero_home)
 
+        isGuestMode = intent.getBooleanExtra(EXTRA_GUEST_MODE, false)
         auth = FirebaseAuth.getInstance()
         db = FirebaseDatabase.getInstance().reference
 
         initViews()
-        loadPassengerName()
+        if (isGuestMode) {
+            tvGreeting.text = "Rutas disponibles"
+        } else {
+            loadPassengerName()
+        }
         setupRecyclerView()
         listenActiveRecorridos()
         setupBottomNav()
@@ -127,7 +137,15 @@ class PasajeroHomeActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.nav_passenger_home -> true
                 R.id.nav_passenger_profile -> {
-                    startActivity(Intent(this, PerfilActivity::class.java))
+                    if (isGuestMode) {
+                        Toast.makeText(this, "Inicia sesión para ver tu perfil", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(this, Login::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        }
+                        startActivity(intent)
+                    } else {
+                        startActivity(Intent(this, PerfilActivity::class.java))
+                    }
                     true
                 }
                 else -> false

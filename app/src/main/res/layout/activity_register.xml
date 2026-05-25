@@ -273,6 +273,88 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Placa del vehículo (solo conductor) -->
+            <TextView
+                    android:id="@+id/lblPlaca"
+                    style="@style/LabelStyle"
+                    android:text="PLACA DEL VEHÍCULO"
+                    android:layout_marginTop="12dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilPlaca"
+                    style="@style/InputLayout"
+                    android:layout_marginTop="4dp"
+                    app:startIconDrawable="@drawable/ic_bus"
+                    app:startIconTint="@color/text_hint">
+                <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPlaca"
+                        style="@style/InputEdit"
+                        android:hint="Ej. ABC123 o ABC12D"
+                        android:inputType="textCapCharacters"
+                        android:maxLength="7" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Número de licencia de conducir (solo conductor) -->
+            <TextView
+                    android:id="@+id/lblNumLicencia"
+                    style="@style/LabelStyle"
+                    android:text="N° LICENCIA DE CONDUCIR"
+                    android:layout_marginTop="12dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilNumLicencia"
+                    style="@style/InputLayout"
+                    android:layout_marginTop="4dp"
+                    app:startIconDrawable="@drawable/ic_person"
+                    app:startIconTint="@color/text_hint">
+                <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etNumLicencia"
+                        style="@style/InputEdit"
+                        android:hint="Ej. 123456789"
+                        android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Vencimiento de licencia (solo conductor) -->
+            <TextView
+                    android:id="@+id/lblVencimientoLicencia"
+                    style="@style/LabelStyle"
+                    android:text="VENCIMIENTO DE LICENCIA"
+                    android:layout_marginTop="12dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilVencimientoLicencia"
+                    style="@style/InputLayout"
+                    android:layout_marginTop="4dp"
+                    app:startIconDrawable="@drawable/ic_schedule"
+                    app:startIconTint="@color/text_hint"
+                    app:endIconMode="custom"
+                    app:endIconDrawable="@drawable/ic_schedule"
+                    app:endIconTint="@color/text_hint">
+                <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etVencimientoLicencia"
+                        style="@style/InputEdit"
+                        android:hint="DD/MM/AAAA"
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:cursorVisible="false" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Empresa de transporte (solo conductor) -->
+            <TextView
+                    android:id="@+id/lblEmpresaTransporte"
+                    style="@style/LabelStyle"
+                    android:text="EMPRESA DE TRANSPORTE"
+                    android:layout_marginTop="12dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilEmpresaTransporte"
+                    style="@style/InputLayout"
+                    android:layout_marginTop="4dp"
+                    app:startIconDrawable="@drawable/ic_location_on"
+                    app:startIconTint="@color/text_hint">
+                <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etEmpresaTransporte"
+                        style="@style/InputEdit"
+                        android:hint="Nombre de la empresa certificada"
+                        android:inputType="textCapWords" />
+            </com.google.android.material.textfield.TextInputLayout>
+
             <!-- Botón Registrarse -->
             <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRegister"

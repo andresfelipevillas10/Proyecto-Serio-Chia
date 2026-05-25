@@ -1,5 +1,6 @@
 package com.example.proyecto_definitivo
 
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +17,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 
 class Register : AppCompatActivity() {
@@ -33,10 +37,13 @@ class Register : AppCompatActivity() {
     private lateinit var inputDireccion: TextInputLayout
     private lateinit var inputBus: TextInputLayout
     private lateinit var inputTurno: TextInputLayout
-
-
+    private lateinit var inputPlaca: TextInputLayout
+    private lateinit var inputNumLicencia: TextInputLayout
+    private lateinit var inputVencimientoLicencia: TextInputLayout
+    private lateinit var inputEmpresaTransporte: TextInputLayout
 
     private var role: String = "PASAJERO"
+    private var vencimientoLicenciaRaw: String = "" // formato YYYY-MM-DD para Firebase
 
 
 
@@ -57,6 +64,10 @@ class Register : AppCompatActivity() {
         inputDireccion = findViewById(R.id.tilDireccion)
         inputBus = findViewById(R.id.tilNoBus)
         inputTurno = findViewById(R.id.inputTurno)
+        inputPlaca = findViewById(R.id.tilPlaca)
+        inputNumLicencia = findViewById(R.id.tilNumLicencia)
+        inputVencimientoLicencia = findViewById(R.id.tilVencimientoLicencia)
+        inputEmpresaTransporte = findViewById(R.id.tilEmpresaTransporte)
         findViewById<Button>(R.id.btnRegister).setOnClickListener { validate() }
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
         findViewById<TextView>(R.id.tvToLogin).setOnClickListener {
@@ -64,6 +75,7 @@ class Register : AppCompatActivity() {
             finish()
         }
 
+        configurarDatePickerLicencia()
         limpiarCampos()
         configurarTurnos()
         configurarVistaSegunRol()
@@ -108,22 +120,71 @@ class Register : AppCompatActivity() {
         findViewById<EditText>(R.id.etDireccion).text.clear()
         findViewById<EditText>(R.id.etNoBus).text.clear()
         findViewById<AutoCompleteTextView>(R.id.atvTurno).text.clear()
+        findViewById<EditText>(R.id.etPlaca).text.clear()
+        findViewById<EditText>(R.id.etNumLicencia).text.clear()
+        findViewById<EditText>(R.id.etVencimientoLicencia).text.clear()
+        findViewById<EditText>(R.id.etEmpresaTransporte).text.clear()
+        vencimientoLicenciaRaw = ""
         clearErrors()
     }
 
-    // 🔥 Oculta campos si es pasajero
     private fun configurarVistaSegunRol() {
         val subtitle = findViewById<TextView>(R.id.tvRegSubtitle)
+        val lblPlaca = findViewById<TextView>(R.id.lblPlaca)
+        val lblNumLicencia = findViewById<TextView>(R.id.lblNumLicencia)
+        val lblVencimiento = findViewById<TextView>(R.id.lblVencimientoLicencia)
+        val lblEmpresa = findViewById<TextView>(R.id.lblEmpresaTransporte)
 
         if (role == "PASAJERO") {
             inputBus.visibility = View.GONE
             inputTurno.visibility = View.GONE
+            inputPlaca.visibility = View.GONE
+            inputNumLicencia.visibility = View.GONE
+            inputVencimientoLicencia.visibility = View.GONE
+            inputEmpresaTransporte.visibility = View.GONE
+            lblPlaca.visibility = View.GONE
+            lblNumLicencia.visibility = View.GONE
+            lblVencimiento.visibility = View.GONE
+            lblEmpresa.visibility = View.GONE
             subtitle.text = "Completa tus datos para ingresar como pasajero."
         } else {
             inputBus.visibility = View.VISIBLE
             inputTurno.visibility = View.VISIBLE
+            inputPlaca.visibility = View.VISIBLE
+            inputNumLicencia.visibility = View.VISIBLE
+            inputVencimientoLicencia.visibility = View.VISIBLE
+            inputEmpresaTransporte.visibility = View.VISIBLE
+            lblPlaca.visibility = View.VISIBLE
+            lblNumLicencia.visibility = View.VISIBLE
+            lblVencimiento.visibility = View.VISIBLE
+            lblEmpresa.visibility = View.VISIBLE
             subtitle.text = "Completa tus datos para ingresar como conductor."
         }
+    }
+
+    private fun configurarDatePickerLicencia() {
+        val etVencimiento = findViewById<EditText>(R.id.etVencimientoLicencia)
+        val displayFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+        val showPicker = {
+            val cal = Calendar.getInstance()
+            DatePickerDialog(
+                this,
+                { _, year, month, day ->
+                    val selected = Calendar.getInstance().apply { set(year, month, day) }
+                    etVencimiento.setText(displayFormat.format(selected.time))
+                    vencimientoLicenciaRaw = String.format("%04d-%02d-%02d", year, month + 1, day)
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+            ).apply {
+                datePicker.minDate = System.currentTimeMillis() // solo fechas futuras
+            }.show()
+        }
+
+        etVencimiento.setOnClickListener { showPicker() }
+        inputVencimientoLicencia.setEndIconOnClickListener { showPicker() }
     }
 
     private fun validate() {
@@ -171,8 +232,11 @@ class Register : AppCompatActivity() {
             valid = false
         }
 
-        // 🔥 Validación solo para conductores
         if (role == "CONDUCTOR") {
+            val placa = findViewById<EditText>(R.id.etPlaca).text.toString().trim().uppercase()
+            val numLicencia = findViewById<EditText>(R.id.etNumLicencia).text.toString().trim()
+            val empresaTransporte = findViewById<EditText>(R.id.etEmpresaTransporte).text.toString().trim()
+
             if (bus.isEmpty()) {
                 inputBus.error = "Número de bus requerido"
                 valid = false
@@ -180,6 +244,29 @@ class Register : AppCompatActivity() {
 
             if (turno.isEmpty()) {
                 inputTurno.error = "Turno requerido"
+                valid = false
+            }
+
+            val placaRegex = Regex("^[A-Z]{3}[0-9]{2,3}[A-Z]?$")
+            if (!placaRegex.matches(placa)) {
+                inputPlaca.error = "Placa inválida. Use formato AAA123 o AAA12B"
+                valid = false
+            } else {
+                inputPlaca.error = null
+            }
+
+            if (numLicencia.length < 5) {
+                inputNumLicencia.error = "Número de licencia inválido"
+                valid = false
+            }
+
+            if (vencimientoLicenciaRaw.isEmpty()) {
+                inputVencimientoLicencia.error = "Seleccione la fecha de vencimiento"
+                valid = false
+            }
+
+            if (empresaTransporte.length < 3) {
+                inputEmpresaTransporte.error = "Ingrese el nombre de la empresa"
                 valid = false
             }
         }
@@ -190,6 +277,13 @@ class Register : AppCompatActivity() {
                 val uid = auth.currentUser!!.uid
                 Log.d("RegisterAuth", "Cuenta de $role creada exitosamente en Firebase Auth con UID: $uid")
 
+                val placa = if (role == "CONDUCTOR")
+                    findViewById<EditText>(R.id.etPlaca).text.toString().trim().uppercase() else ""
+                val numLicencia = if (role == "CONDUCTOR")
+                    findViewById<EditText>(R.id.etNumLicencia).text.toString().trim() else ""
+                val empresaTransporte = if (role == "CONDUCTOR")
+                    findViewById<EditText>(R.id.etEmpresaTransporte).text.toString().trim() else ""
+
                 val user = User(
                     uid = uid,
                     nombre = nombre,
@@ -199,7 +293,11 @@ class Register : AppCompatActivity() {
                     email = email,
                     noBus = if (role == "CONDUCTOR") bus else "",
                     turno = if (role == "CONDUCTOR") turno else "",
-                    rol = role
+                    rol = role,
+                    placa = placa,
+                    numLicencia = numLicencia,
+                    vencimientoLicencia = if (role == "CONDUCTOR") vencimientoLicenciaRaw else "",
+                    empresaTransporte = empresaTransporte
                 )
 
                 val nodeName = if (role == "CONDUCTOR") "conductores" else "pasajeros"
@@ -255,6 +353,10 @@ class Register : AppCompatActivity() {
         if (user.rol == "CONDUCTOR") {
             profile["noBus"] = user.noBus
             profile["turno"] = user.turno
+            profile["placa"] = user.placa
+            profile["numLicencia"] = user.numLicencia
+            profile["vencimientoLicencia"] = user.vencimientoLicencia
+            profile["empresaTransporte"] = user.empresaTransporte
         }
 
         return profile
@@ -274,6 +376,10 @@ class Register : AppCompatActivity() {
         inputDireccion.error = null
         inputBus.error = null
         inputTurno.error = null
+        inputPlaca.error = null
+        inputNumLicencia.error = null
+        inputVencimientoLicencia.error = null
+        inputEmpresaTransporte.error = null
     }
 }
 

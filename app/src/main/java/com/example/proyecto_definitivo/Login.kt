@@ -29,6 +29,7 @@ class Login : AppCompatActivity() {
     private lateinit var btnIngresar: MaterialButton
     private lateinit var tvRegister: TextView
     private lateinit var tvOlvidoPass: TextView
+    private lateinit var tvVerRutas: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +51,7 @@ class Login : AppCompatActivity() {
         btnIngresar = findViewById(R.id.btnLogin)
         tvRegister = findViewById(R.id.tvRegister)
         tvOlvidoPass = findViewById(R.id.tvOlvidoPassword)
+        tvVerRutas = findViewById(R.id.tvVerRutas)
 
         tvRegister.text = HtmlCompat.fromHtml(
             getString(R.string.new_user),
@@ -60,13 +62,19 @@ class Login : AppCompatActivity() {
     private fun setupListeners() {
         btnIngresar.setOnClickListener { validateAndLogin() }
 
-        // REDIRECCIÓN OPTIMIZADA: Hacia SelectionActivity (Rol Selection)
         tvRegister.setOnClickListener {
             navigateTo(SelectionActivity::class.java)
         }
 
         tvOlvidoPass.setOnClickListener {
             navigateTo(ForgotPasswordActivity::class.java)
+        }
+
+        tvVerRutas.setOnClickListener {
+            val intent = Intent(this, PasajeroHomeActivity::class.java).apply {
+                putExtra(PasajeroHomeActivity.EXTRA_GUEST_MODE, true)
+            }
+            startActivity(intent)
         }
     }
 
